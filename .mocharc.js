@@ -9,5 +9,8 @@ module.exports = {
     "./test/**/*.test.ts",
   ],
   exit: true,
-  require: ["ts-node/register"]
+  require: [
+    "ts-node/register",
+    "./test/fixtures.ts"
+  ]
 };
