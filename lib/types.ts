@@ -1,3 +1,5 @@
+import { FixedLengthArray } from "type-fest";
+
 export interface OWMServiceOptions {
   appid: string
   v: string
@@ -10,22 +12,60 @@ export interface WithAppId {
   appid: string
 }
 
-export interface ByCityName extends WithAppId {
+export interface WithV {
+  v: string
+}
+
+export interface QueryByCityName {
+  q: string
+}
+
+export interface QueryByCityId {
+  id: number
+}
+
+export interface QueryByGeoCoordinates {
+  lat: Latitude
+  lon: Longitude
+}
+
+export interface QueryByZipCode {
+  zip: string
+}
+
+export type QueryParams = QueryByCityId & QueryByCityName & QueryByGeoCoordinates & QueryByZipCode & WithAppId & WithLangModeUnits
+
+export interface WithLang {
+  lang: Lang
+}
+
+export interface WithMode {
+  mode: Mode
+}
+
+export interface WithUnits {
+  units: Unit
+}
+
+export type WithLangModeUnits =
+  WithLang & WithMode & WithUnits;
+
+export interface ByCityName {
   cityName: string
   stateCode?: string
   countryCode?: string
 }
 
-export interface ByCityId extends WithAppId {
+export interface ByCityId {
   cityId: number
 }
 
-export interface ByGeoGraphicCoordinates extends WithAppId {
-  latitude: string
-  longitude: string
+export interface ByGeoGraphicCoordinates {
+  lat: Latitude
+  lon: Longitude
 }
 
-export interface ByZipCode extends WithAppId {
+export interface ByZipCode {
   zipCode: string
   countryCode?: string
 }
@@ -54,20 +94,143 @@ export type Lang = "af" | "al" | "ar" | "az" | "bg" | "ca" |
 "ro" | "ru" | "sv, se" | "sk" | "sl" | "sp, es" | "sr" | "th" |
 "tr" | "ua, uk" | "vi" | "zh_cn" | "zh_tw" | "zu";
 
-export interface ResultCurrentWeatherData<T> {
+export type HourlyForecast4DaysData = 
+  (ByCityName | ByCityId | ByGeoGraphicCoordinates | ByZipCode) &
+  Partial<WithAppId> & 
+  Partial<WithV> & 
+  Partial<WithLangModeUnits> &
+  { cnt?: number };
+
+export interface HourlyForecast4DaysResult {
+  appid: string
+}
+
+export type AnyData = CurrentWeatherDataData | OneCallData;
+
+export type AnyResult = CurrentWeatherDataResult | OneCallResult;
+
+export type OneCallData = 
+  ByGeoGraphicCoordinates &
+  { exclude?: ("current"|"minutely"|"hourly"|"daily"|"alerts")[] } &
+  Partial<WithAppId & WithV & WithLangModeUnits>;
+
+export type CurrentWeatherDataData = 
+  (ByCityName | ByCityId | ByGeoGraphicCoordinates | ByZipCode) &
+  Partial<WithAppId & WithV & WithLang & WithUnits>;
+
+export type T = number;
+
+export interface OneCallResult {
+  current: OneCallResultCurrent
+  daily: FixedLengthArray<OneCallResultDaily, 8>
+  hourly: FixedLengthArray<OneCallResultHourly, 48>
+  lat: Latitude
+  lon: Longitude
+  minutely: FixedLengthArray<OneCallResultMinutely, 61>
+  timezone: string
+  timezone_offset: number
+}
+
+export interface OneCallResultCurrent {
+  clouds: number
+  dew_point: number
+  dt: number
+  feels_like: number
+  humidity: number
+  pressure: number
+  sunrise: number
+  sunset: number
+  temp: number
+  uvi: number
+  visibility: number
+  weather: [{
+    id: number
+    main: string
+    description: string
+    icon: string
+  }]
+  wind_deg: number
+  wind_speed: number
+}
+
+export interface OneCallResultDaily {
+  clouds: number
+  dew_point: number
+  dt: number
+  feels_like: {
+    day: number
+    eve: number
+    morn: number
+    night: number
+  }
+  humidity: number
+  moon_phase: number
+  moonrise: number
+  moonset: number
+  pop: number
+  pressure: number
+  rain: number
+  sunrise: number
+  sunset: number
+  temp: {
+    day: number
+    eve: number
+    max: number
+    min: number
+    morn: number
+    night: number
+  }
+  uvi: number
+  weather: [{
+    id: number
+    main: string
+    description: string
+    icon: string
+  }]
+  wind_deg: number
+  wind_gust: number
+  wind_speed: number
+}
+
+export interface OneCallResultHourly {
+  clouds: number
+  dew_point: number
+  dt: number
+  feels_like: number
+  humidity: number
+  pop: number
+  pressure: number
+  temp: number
+  uvi: number
+  visibility: number
+  weather: [{
+    id: number
+    main: string
+    description: string
+    icon: string
+  }]
+  wind_deg: number
+  wind_gust: number
+  wind_speed: number
+}
+
+export interface OneCallResultMinutely {
+  dt: number
+  precipitation: number
+}
+
+export interface CurrentWeatherDataResult {
+  base: string
+  clouds: {
+    all: number
+  }
+  cod: number
   coord: {
     lon: Longitude
     lat: Latitude
   },
-  weather: [
-    {
-      id: number
-      main: "Clear"
-      description: "clear sky"
-      icon: "01d"
-    }
-  ]
-  base: "stations"
+  dt: number
+  id: number
   main: {
     temp: T
     feels_like: T
@@ -75,26 +238,29 @@ export interface ResultCurrentWeatherData<T> {
     temp_max: T
     pressure: number
     humidity: number
-  },
-  visibility: number
-  wind: {
-    "speed": number
-    "deg": number
   }
-  clouds: {
-    all: 1
+  name: string
+  rain: {
+    "1h": number
   }
-  dt: number
   sys: {
-    type: 1
+    type: number
     id: number
     message: number
-    country: "US"
+    country: string
     sunrise: number
     sunset: number
   }
   timezone: number
-  id: number
-  name: string
-  cod: 200
+  visibility: number
+  weather: [{
+    id: number
+    main: "Clear"
+    description: "clear sky"
+    icon: "01d"
+  }]
+  wind: {
+    deg: number
+    speed: number
+  }
 }

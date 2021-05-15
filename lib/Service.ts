@@ -1,9 +1,22 @@
-import { Endpoint, OWMServiceOptions } from "./types";
+import {
+  CurrentWeatherDataData, 
+  Endpoint, 
+  OWMServiceOptions,
+  CurrentWeatherDataResult,
+  HourlyForecast4DaysResult,
+  HourlyForecast4DaysData,
+  QueryParams,
+  OneCallResult,
+  OneCallData,
+  AnyData,
+  AnyResult
+} from "./types";
 import {
   SetOptional,
   SetRequired 
 } from "type-fest";
 import got from "got/dist/source";
+import { Params } from "@feathersjs/feathers";
 
 const makeOptions = (options: SetRequired<Partial<OWMServiceOptions>, "appid">): OWMServiceOptions => {
   return {
@@ -19,20 +32,23 @@ const baseUrl = "https://api.openweathermap.org/data";
 
 export class Service {
   options: OWMServiceOptions
-  constructor(options: SetOptional<OWMServiceOptions, "v">) {
+  constructor(options: SetOptional<OWMServiceOptions, "v" | "lang" | "mode" | "units">) {
     this.options = makeOptions(options);
   }
 
-  async _find(params) {
+  async find(params: Params & { query: CurrentWeatherDataData & { endpoint: "weather" } }): Promise<CurrentWeatherDataResult>
+  async find(params: Params & { query: OneCallData & { endpoint: "onecall" } }): Promise<OneCallResult>
+  async find(params: Params & { query: AnyData & { endpoint: Endpoint }}): Promise<AnyResult> {
     return await this.makeRequest(params.query, params.query.endpoint);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async _create(data, params) {
+  async create(data: CurrentWeatherDataData & { endpoint: "weather" }): Promise<CurrentWeatherDataResult>
+  async create(data: OneCallData & { endpoint: "onecall" }): Promise<OneCallResult>
+  async create(data: AnyData & { endpoint: Endpoint }): Promise<AnyResult> {
     return await this.makeRequest(data, data.endpoint);
   }
 
-  private composeSearchParamsFromData(data): Record<string, string> {
+  private composeSearchParamsFromData(data): QueryParams {
     data = Object.assign({}, data);
     const appid = data?.appid || this.options.appid;
     const lang = data?.lang || this.options.lang;
@@ -44,7 +60,7 @@ export class Service {
       lang,
       mode,
       units
-    };
+    } as QueryParams;
     
     if (data.cityName) {
       const q = [data.cityName];
@@ -53,51 +69,58 @@ export class Service {
       query.q = q.join(",");
     } else if (data.cityId) {
       query.id = data.cityId;
-    } else if (data.latitude && data.longitude) {
-      query.lat = data.latitude;
-      query.lon = data.longitude;
+    } else if (data.lat && data.lon) {
+      query.lat = data.lat;
+      query.lon = data.lon;
     } else if (data.zipCode) {
       const zip = [data.zipCode];
       if (data.countryCode) { zip.push(data.countryCode); }
-      query.zip;
+      query.zip = zip.join(",");
     }
 
     return query;
   }
 
-  private getUrl(data, endpoint: Endpoint) {
+  private getUrl<D extends AnyData>(data: D, endpoint: Endpoint) {
     const v = data?.v || this.options.v;
     return `${baseUrl}/${v}/${endpoint}`;
   }
 
-  private async makeRequest(data, endpoint: Endpoint) {
-    return await got(this.getUrl(data, endpoint), { 
-      searchParams: this.composeSearchParamsFromData(data)
+  private async makeRequest<D extends AnyData, R extends AnyResult>(data: D, endpoint: Endpoint): Promise<R> {
+    const queryParams = this.composeSearchParamsFromData(data);
+    const result = await got(this.getUrl(data, endpoint), {
+      searchParams: queryParams as unknown as Record<string, string | number | boolean>
     });
+    if (queryParams.mode === "json") {
+      return JSON.parse(result.body);
+    } else {
+      return result.body as unknown as R;
+    }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async currentWeatherData(data, params) {
+  async currentWeatherData(
+    data: CurrentWeatherDataData, 
+    params: Params = {}
+  ): Promise<CurrentWeatherDataResult> {
     return await this.makeRequest(data, "weather");
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async hourlyForecast4Days(data, params) {
+  async hourlyForecast4Days(
+    data: HourlyForecast4DaysData, 
+    params: Params = {}
+  ): Promise<any> {
     return await this.makeRequest(data, "forecast/hourly");
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async oneCall(data, params) {
+  async oneCall(data: OneCallData, params: Params = {}): Promise<OneCallResult> {
     return await this.makeRequest(data, "onecall");
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async dailyForecast16Days(data, params) {
+  async dailyForecast16Days(data, params: Params = {}): Promise<any> {
     return await this.makeRequest(data, "forecast/daily");
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async climaticForecast30Days(data, params) {
+  async climaticForecast30Days(data, params: Params = {}): Promise<any> {
     return await this.makeRequest(data, "forecast/climate");
   }
 
