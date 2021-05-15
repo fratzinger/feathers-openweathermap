@@ -99,28 +99,26 @@ export class Service {
   }
 
   async currentWeatherData(
-    data: CurrentWeatherDataData, 
-    params: Params = {}
+    data: CurrentWeatherDataData
   ): Promise<CurrentWeatherDataResult> {
     return await this.makeRequest(data, "weather");
   }
 
   async hourlyForecast4Days(
-    data: HourlyForecast4DaysData, 
-    params: Params = {}
+    data: HourlyForecast4DaysData
   ): Promise<any> {
     return await this.makeRequest(data, "forecast/hourly");
   }
 
-  async oneCall(data: OneCallData, params: Params = {}): Promise<OneCallResult> {
+  async oneCall(data: OneCallData): Promise<OneCallResult> {
     return await this.makeRequest(data, "onecall");
   }
 
-  async dailyForecast16Days(data, params: Params = {}): Promise<any> {
+  async dailyForecast16Days(data): Promise<any> {
     return await this.makeRequest(data, "forecast/daily");
   }
 
-  async climaticForecast30Days(data, params: Params = {}): Promise<any> {
+  async climaticForecast30Days(data): Promise<any> {
     return await this.makeRequest(data, "forecast/climate");
   }
 
