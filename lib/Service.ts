@@ -3,7 +3,6 @@ import {
   Endpoint, 
   OWMServiceOptions,
   CurrentWeatherDataResult,
-  HourlyForecast4DaysResult,
   HourlyForecast4DaysData,
   QueryParams,
   OneCallResult,
@@ -114,11 +113,11 @@ export class Service {
     return await this.makeRequest(data, "onecall");
   }
 
-  async dailyForecast16Days(data): Promise<any> {
+  async dailyForecast16Days(data: any): Promise<any> {
     return await this.makeRequest(data, "forecast/daily");
   }
 
-  async climaticForecast30Days(data): Promise<any> {
+  async climaticForecast30Days(data: any): Promise<any> {
     return await this.makeRequest(data, "forecast/climate");
   }
 

@@ -18,9 +18,11 @@ module.exports = {
     "quotes": ["warn", "double", "avoid-escape"],
     "indent": ["warn", 2, { "SwitchCase": 1 }],
     "semi": ["warn", "always"],
+    "camelcase": "off",
     "@typescript-eslint/no-unused-vars": "warn",
+    "@typescript-eslint/no-explicit-any": "off",
+    "@typescript-eslint/explicit-module-boundary-types": "off",
     "no-console": "off",
-    "camelcase": "warn",
     "require-atomic-updates": "off",
     "prefer-destructuring": ["warn", {
       "array": false,
