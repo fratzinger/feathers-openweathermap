@@ -1,7 +1,5 @@
 # feathers-openweathermap
 
-> Ever needed weather information in your [feathers.js](www.feathersjs.com) app? No matter if historical, current or forecast data. This is thin layer around the [OpenWeatherMap API](https://openweathermap.org/api) wrapped in a `feathers.js` service. 
-
 ![npm](https://img.shields.io/npm/v/feathers-openweathermap)
 ![GitHub Workflow Status](https://img.shields.io/github/workflow/status/fratzinger/feathers-openweathermap/Node.js%20CI)
 ![Code Climate maintainability](https://img.shields.io/codeclimate/maintainability/fratzinger/feathers-openweathermap)
@@ -9,6 +7,8 @@
 ![David](https://img.shields.io/david/fratzinger/feathers-openweathermap)
 ![npm](https://img.shields.io/npm/dm/feathers-openweathermap)
 [![GitHub license](https://img.shields.io/github/license/fratzinger/feathers-openweathermap)](https://github.com/fratzinger/feathers-openweathermap/blob/master/LICENSE)
+
+> Ever needed weather information in your [feathers.js](www.feathersjs.com) app? No matter if historical, current or forecast data. This is thin layer around the [OpenWeatherMap API](https://openweathermap.org/api) wrapped in a `feathers.js` service. 
 
 ## Installation
 
