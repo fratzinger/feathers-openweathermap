@@ -8,7 +8,14 @@ import {
   OneCallResult,
   OneCallData,
   AnyData,
-  AnyResult
+  AnyResult,
+  DailyForecast16DaysResult,
+  ClimaticForeCast30DaysResult,
+  DailyForecast16DaysData,
+  ClimaticForeCast30DaysData,
+  FiveDay3HourForecastData,
+  FiveDay3HourForecastResult,
+  HourlyForecast4DaysResult
 } from "./types";
 import {
   SetOptional,
@@ -37,12 +44,20 @@ export class Service {
 
   async find(params: Params & { query: CurrentWeatherDataData & { endpoint: "weather" } }): Promise<CurrentWeatherDataResult>
   async find(params: Params & { query: OneCallData & { endpoint: "onecall" } }): Promise<OneCallResult>
+  async find(params: Params & { query: FiveDay3HourForecastData & { endpoint: "forecast" } }): Promise<FiveDay3HourForecastResult>
+  async find(params: Params & { query: HourlyForecast4DaysData & { endpoint: "forecast/hourly" } }): Promise<HourlyForecast4DaysResult>
+  async find(params: Params & { query: DailyForecast16DaysData & { endpoint: "forecast/daily" } }): Promise<DailyForecast16DaysResult>
+  async find(params: Params & { query: ClimaticForeCast30DaysData & { endpoint: "forecast/climate" } }): Promise<ClimaticForeCast30DaysResult>
   async find(params: Params & { query: AnyData & { endpoint: Endpoint }}): Promise<AnyResult> {
     return await this.makeRequest(params.query, params.query.endpoint);
   }
 
   async create(data: CurrentWeatherDataData & { endpoint: "weather" }): Promise<CurrentWeatherDataResult>
   async create(data: OneCallData & { endpoint: "onecall" }): Promise<OneCallResult>
+  async create(data: FiveDay3HourForecastData & { endpoint: "forecast" }): Promise<FiveDay3HourForecastResult>
+  async create(data: HourlyForecast4DaysData & { endpoint: "forecast/hourly" }): Promise<HourlyForecast4DaysResult>
+  async create(data: DailyForecast16DaysData & { endpoint: "forecast/daily" }): Promise<DailyForecast16DaysResult>
+  async create(data: ClimaticForeCast30DaysData & { endpoint: "forecast/climate" }): Promise<ClimaticForeCast30DaysResult>
   async create(data: AnyData & { endpoint: Endpoint }): Promise<AnyResult> {
     return await this.makeRequest(data, data.endpoint);
   }
@@ -103,22 +118,25 @@ export class Service {
     return await this.makeRequest(data, "weather");
   }
 
-  async hourlyForecast4Days(
-    data: HourlyForecast4DaysData
-  ): Promise<any> {
-    return await this.makeRequest(data, "forecast/hourly");
-  }
-
   async oneCall(data: OneCallData): Promise<OneCallResult> {
     return await this.makeRequest(data, "onecall");
   }
 
-  async dailyForecast16Days(data: any): Promise<any> {
+  async fiveDay3HourForecast(data: FiveDay3HourForecastData): Promise<FiveDay3HourForecastResult> {
+    return await this.makeRequest(data, "forecast");
+  }
+
+  async hourlyForecast4Days(
+    data: HourlyForecast4DaysData
+  ): Promise<HourlyForecast4DaysResult> {
+    return await this.makeRequest(data, "forecast/hourly");
+  }
+
+  async dailyForecast16Days(data: DailyForecast16DaysData): Promise<DailyForecast16DaysResult> {
     return await this.makeRequest(data, "forecast/daily");
   }
 
-  async climaticForecast30Days(data: any): Promise<any> {
+  async climaticForecast30Days(data: ClimaticForeCast30DaysData): Promise<ClimaticForeCast30DaysResult> {
     return await this.makeRequest(data, "forecast/climate");
   }
-
 }

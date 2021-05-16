@@ -14,7 +14,7 @@ describe("service.test.ts", function() {
     service = app.service("test");
   });
 
-  describe("current weather data", function() {
+  describe("weather - 'current weather data'", function() {
     describe("find", async function() {
       it("find: get current weather by city name", async function() {
         const result = await service.find({ query: { endpoint: "weather", cityName: "Munich", stateCode: "DE" } });
@@ -62,56 +62,6 @@ describe("service.test.ts", function() {
     });
   });
 
-  // not included in free subscription
-  describe.skip("hourlyForecast4Days", function() {
-    it("get current weather by city name", async function() {
-      const result = await service.hourlyForecast4Days({ cityName: "Munich", stateCode: "DE", countryCode: "DE" });
-      assert.strictEqual(result.name, "Munich", "found correct city");
-    });
-
-    it("get current weather data by city id", async function() {
-      const result = await service.hourlyForecast4Days({ cityId: 2844588 });
-      assert.strictEqual(result.name, "Rostock", "found correct city");
-    });
-
-    it("get current weather by geo coordinates", async function() {
-      const result = await service.hourlyForecast4Days({ lat: 52.520008, lon: 13.404954 });
-      assert.strictEqual(result.name, "Mitte", "found correct 'city'");
-    });
-
-    it("get current weather by zip code", async function() {
-      const result = await service.hourlyForecast4Days({ zipCode: "18057", countryCode: "DE" });
-      assert.strictEqual(result.name, "Rostock", "found correct city");
-    });
-  });
-
-  // not included in free subscription
-  describe.skip("dailyForecast16Days", function() {
-    it("get current weather by city name", async function() {
-      const result = await service.dailyForecast16Days({ cityName: "Munich", stateCode: "DE", countryCode: "DE" });
-      
-      assert.strictEqual(result.name, "Munich", "found correct city");
-    });
-
-    it("get current weather data by city id", async function() {
-      const result = await service.dailyForecast16Days({ cityId: 2844588 });
-      
-      assert.strictEqual(result.name, "Rostock", "found correct city");
-    });
-
-    it("get current weather by geo coordinates", async function() {
-      const result = await service.dailyForecast16Days({ lat: 52.520008, lon: 13.404954 });
-      
-      assert.strictEqual(result.name, "Mitte", "found correct 'city'");
-    });
-
-    it("get current weather by zip code", async function() {
-      const result = await service.dailyForecast16Days({ zipCode: "18057", countryCode: "DE" });
-      
-      assert.strictEqual(result.name, "Rostock", "found correct city");
-    });
-  });
-
   describe("onecall", function() {
     describe("find", function() {
       it("find: get onecall by geo coordinates", async function() {
@@ -144,26 +94,150 @@ describe("service.test.ts", function() {
     });
   });
 
+  describe("forecast - '5 Day / 3 Hour Forecast'", function() {
+    describe("find", async function() {
+      it("find: get forecast by city name", async function() {
+        const result = await service.find({ query: { endpoint: "forecast", cityName: "Munich", stateCode: "DE" } });
+        assert.strictEqual(result.city.name, "Munich", "found correct city");
+      });
+
+      it("find: get forecast data by city id", async function() {
+        const result = await service.find({ query: { endpoint: "forecast", cityId: 2844588 } });
+        assert.strictEqual(result.city.name, "Rostock", "found correct city");
+      });
+    });
+
+    describe("create", async function() {
+      it("create: get forecast by city name", async function() {
+        const result = await service.create({ endpoint: "forecast", cityName: "Munich", stateCode: "DE" });
+        assert.strictEqual(result.city.name, "Munich", "found correct city");
+      });
+
+      it("create: get forecast data by city id", async function() {
+        const result = await service.create({ endpoint: "forecast", cityId: 2844588 });
+        assert.strictEqual(result.city.name, "Rostock", "found correct city");
+      });
+    });
+
+    describe("custom method", function() {
+      it("custom: get forecast by city name", async function() {
+        const result = await service.fiveDay3HourForecast({ cityName: "Munich", stateCode: "DE", countryCode: "DE" });
+        assert.strictEqual(result.city.name, "Munich", "found correct city");
+      });
+  
+      it("custom: get forecast data by city id", async function() {
+        const result = await service.fiveDay3HourForecast({ cityId: 2844588 });
+        assert.strictEqual(result.city.name, "Rostock", "found correct city");
+      });
+  
+      it("custom: get forecast by geo coordinates", async function() {
+        const result = await service.fiveDay3HourForecast({ lat: 52.520008, lon: 13.404954 });
+        assert.strictEqual(result.city.name, "Mitte", "found correct 'city'");
+      });
+  
+      it("custom: get forecast by zip code", async function() {
+        const result = await service.fiveDay3HourForecast({ zipCode: "18057", countryCode: "DE" });
+        assert.strictEqual(result.city.name, "Rostock", "found correct city");
+      });
+    });
+  });
+
   // not included in free subscription
-  describe.skip("Climate forecast for 30 days", function() {
-    it("get current weather by city name", async function() {
+  describe.skip("forecast/hourly - 'hourlyForecast4Days'", function() {
+    describe("find", async function() {
+      it("find: get hourly forecast by city name", async function() {
+        const result = await service.find({ query: { endpoint: "forecast/hourly", cityName: "Munich", stateCode: "DE" } });
+        assert.strictEqual(result.city.name, "Munich", "found correct city");
+      });
+
+      it("find: get hourly forecast data by city id", async function() {
+        const result = await service.find({ query: { endpoint: "forecast/hourly", cityId: 2844588 } });
+        assert.strictEqual(result.city.name, "Rostock", "found correct city");
+      });
+    });
+
+    describe("create", async function() {
+      it("create: get hourly forecast by city name", async function() {
+        const result = await service.create({ endpoint: "forecast/hourly", cityName: "Munich", stateCode: "DE" });
+        assert.strictEqual(result.city.name, "Munich", "found correct city");
+      });
+
+      it("create: get hourly forecast data by city id", async function() {
+        const result = await service.create({ endpoint: "forecast/hourly", cityId: 2844588 });
+        assert.strictEqual(result.city.name, "Rostock", "found correct city");
+      });
+    });
+
+    describe("custom method", function() {
+      it("get hourly forecast by city name", async function() {
+        const result = await service.hourlyForecast4Days({ cityName: "Munich", stateCode: "DE", countryCode: "DE" });
+        assert.strictEqual(result.city.name, "Munich", "found correct city");
+      });
+  
+      it("get hourly forecast data by city id", async function() {
+        const result = await service.hourlyForecast4Days({ cityId: 2844588 });
+        assert.strictEqual(result.city.name, "Rostock", "found correct city");
+      });
+  
+      it("get hourly forecast by geo coordinates", async function() {
+        const result = await service.hourlyForecast4Days({ lat: 52.520008, lon: 13.404954 });
+        assert.strictEqual(result.city.name, "Mitte", "found correct 'city'");
+      });
+  
+      it("get hourly forecast by zip code", async function() {
+        const result = await service.hourlyForecast4Days({ zipCode: "18057", countryCode: "DE" });
+        assert.strictEqual(result.city.name, "Rostock", "found correct city");
+      });
+    });
+  });
+
+  // not included in free subscription
+  describe.skip("forecast/daily - 'dailyForecast16Days'", function() {
+    it("get daily forecast by city name", async function() {
+      const result = await service.dailyForecast16Days({ cityName: "Munich", stateCode: "DE", countryCode: "DE" });
+      
+      assert.strictEqual(result.city.name, "Munich", "found correct city");
+    });
+
+    it("get daily forecast data by city id", async function() {
+      const result = await service.dailyForecast16Days({ cityId: 2844588 });
+      
+      assert.strictEqual(result.city.name, "Rostock", "found correct city");
+    });
+
+    it("get daily forecast by geo coordinates", async function() {
+      const result = await service.dailyForecast16Days({ lat: 52.520008, lon: 13.404954 });
+      
+      assert.strictEqual(result.city.name, "Mitte", "found correct 'city'");
+    });
+
+    it("get daily forecast by zip code", async function() {
+      const result = await service.dailyForecast16Days({ zipCode: "18057", countryCode: "DE" });
+      
+      assert.strictEqual(result.city.name, "Rostock", "found correct city");
+    });
+  });
+
+  // not included in free subscription
+  describe.skip("forecast/climate - 'Climate forecast for 30 days'", function() {
+    it("get climatic forecast by city name", async function() {
       const result = await service.climaticForecast30Days({ cityName: "Munich", stateCode: "DE", countryCode: "DE" });
-      assert.strictEqual(result.name, "Munich", "found correct city");
+      assert.strictEqual(result.city.name, "Munich", "found correct city");
     });
 
-    it("get current weather data by city id", async function() {
+    it("get climatic forecast data by city id", async function() {
       const result = await service.climaticForecast30Days({ cityId: 2844588 });
-      assert.strictEqual(result.name, "Rostock", "found correct city");
+      assert.strictEqual(result.city.name, "Rostock", "found correct city");
     });
 
-    it("get current weather by geo coordinates", async function() {
+    it("get climatic forecast by geo coordinates", async function() {
       const result = await service.climaticForecast30Days({ lat: 52.520008, lon: 13.404954 });
-      assert.strictEqual(result.name, "Mitte", "found correct 'city'");
+      assert.strictEqual(result.city.name, "Mitte", "found correct 'city'");
     });
 
-    it("get current weather by zip code", async function() {
+    it("get climatic forecast by zip code", async function() {
       const result = await service.climaticForecast30Days({ zipCode: "18057", countryCode: "DE" });
-      assert.strictEqual(result.name, "Rostock", "found correct city");
+      assert.strictEqual(result.city.name, "Rostock", "found correct city");
     });
   });
 });

@@ -10,10 +10,18 @@
 
 > Ever needed weather information in your [feathers.js](www.feathersjs.com) app? No matter if historical, current or forecast data. This is thin layer around the [OpenWeatherMap API](https://openweathermap.org/api) wrapped in a `feathers.js` service. 
 
+## Supported APIs
+- [Current weather](https://openweathermap.org/current) (*free*)
+- [Onecall](https://openweathermap.org/api/one-call-api) (*free*)
+- [Forecast](https://openweathermap.org/forecast5) (*free*)
+- [Hourly forecast](https://openweathermap.org/api/hourly-forecast) (*Included in the Developer, Professional and Enterprise subscription plans*)
+- [Daily forecast](https://openweathermap.org/forecast16) (*Included in all paid subscription plans*)
+- [Climatic forecast](https://openweathermap.org/api/forecast30) (*Included in the Developer, Professional and Enterprise subscription plans*)
+
 ## Installation
 
 ```bash
-npm i feathers-openweathermap
+npm install feathers-openweathermap
 ```
 
 ## Get your appid
@@ -44,17 +52,45 @@ When using the `find(params)` method, include the query as the params to be pass
 
 ### `find(params)`
 
-#### [current weather](https://openweathermap.org/current):
+#### [Current weather](https://openweathermap.org/current)
 ```js
+// by city name https://openweathermap.org/current#name
+app.service('weather').find({ 
+  query: { 
+    endpoint: 'weather', 
+    cityName: "Munich", 
+    stateCode: "DE"
+  }
+});
+
+// by city id https://openweathermap.org/current#cityid
 app.service('weather').find({ 
   query: { 
     endpoint: 'weather', 
     cityId: 2844588 
   } 
 });
+
+// by geo coordinates https://openweathermap.org/current#geo
+app.service('weather').find({ 
+  query: { 
+    endpoint: 'weather', 
+    lat: 52.520008
+    lon: 13.404954
+  } 
+});
+
+// by zip code https://openweathermap.org/current#zip
+app.service('weather').find({ 
+  query: { 
+    endpoint: 'weather', 
+    zipCode: "18057", 
+    countryCode: "DE"
+  } 
+});
 ```
 
-#### [onecall](https://openweathermap.org/api/one-call-api):
+#### [Onecall](https://openweathermap.org/api/one-call-api)
 ```js
 app.service('weather').find({ 
   query: { 
@@ -65,17 +101,195 @@ app.service('weather').find({
 });
 ```
 
+#### [Forecast](https://openweathermap.org/forecast5)
+
+```js
+// by city name https://openweathermap.org/forecast5#name5
+app.service('weather').find({ 
+  query: { 
+    endpoint: 'forecast', 
+    cityName: "Munich", 
+    stateCode: "DE"
+  }
+});
+
+// by city id https://openweathermap.org/forecast5#cityid5
+app.service('weather').find({ 
+  query: { 
+    endpoint: 'forecast', 
+    cityId: 2844588 
+  } 
+});
+
+// by geo coordinates https://openweathermap.org/forecast5#geo5
+app.service('weather').find({ 
+  query: { 
+    endpoint: 'forecast', 
+    lat: 52.520008,
+    lon: 13.404954
+  } 
+});
+
+// by zip code https://openweathermap.org/forecast5#zip
+app.service('weather').find({ 
+  query: { 
+    endpoint: 'forecast', 
+    zipCode: "18057", 
+    countryCode: "DE"
+  } 
+});
+```
+
+#### [Hourly forecast](https://openweathermap.org/api/hourly-forecast)
+
+```js
+// by city name https://openweathermap.org/api/hourly-forecast#name5
+app.service('weather').find({ 
+  query: { 
+    endpoint: 'forecast/hourly', 
+    cityName: "Munich", 
+    stateCode: "DE"
+  }
+});
+
+// by city id https://openweathermap.org/api/hourly-forecast#cityid5
+app.service('weather').find({ 
+  query: { 
+    endpoint: 'forecast/hourly', 
+    cityId: 2844588 
+  } 
+});
+
+// by geo coordinates https://openweathermap.org/api/hourly-forecast#geo5
+app.service('weather').find({ 
+  query: { 
+    endpoint: 'forecast/hourly', 
+    lat: 52.520008,
+    lon: 13.404954
+  } 
+});
+
+// by zip code https://openweathermap.org/api/hourly-forecast#zip
+app.service('weather').find({ 
+  query: { 
+    endpoint: 'forecast/hourly', 
+    zipCode: "18057", 
+    countryCode: "DE"
+  } 
+});
+```
+
+#### [Daily forecast](https://openweathermap.org/forecast16)
+```js
+// by city name https://openweathermap.org/forecast16#name16
+app.service('weather').find({ 
+  query: { 
+    endpoint: 'forecast/daily', 
+    cityName: "Munich", 
+    stateCode: "DE"
+  }
+});
+
+// by city id https://openweathermap.org/forecast16#cityid16
+app.service('weather').find({ 
+  query: { 
+    endpoint: 'forecast/daily', 
+    cityId: 2844588 
+  } 
+});
+
+// by geo coordinates https://openweathermap.org/forecast16#geo16
+app.service('weather').find({ 
+  query: { 
+    endpoint: 'forecast/daily', 
+    lat: 52.520008,
+    lon: 13.404954
+  } 
+});
+
+// by zip code https://openweathermap.org/forecast16#zip
+app.service('weather').find({ 
+  query: { 
+    endpoint: 'forecast/daily', 
+    zipCode: "18057", 
+    countryCode: "DE"
+  } 
+});
+```
+
+#### [Climatic forecast](https://openweathermap.org/api/forecast30)
+
+```js
+// by city name https://openweathermap.org/api/forecast30#name-year
+app.service('weather').find({ 
+  query: { 
+    endpoint: 'forecast/climatic', 
+    cityName: "Munich", 
+    stateCode: "DE"
+  }
+});
+
+// by city id https://openweathermap.org/api/forecast30#cityid-year
+app.service('weather').find({ 
+  query: { 
+    endpoint: 'forecast/climatic', 
+    cityId: 2844588 
+  } 
+});
+
+// by geo coordinates https://openweathermap.org/api/forecast30#geo-year
+app.service('weather').find({ 
+  query: { 
+    endpoint: 'forecast/climatic', 
+    lat: 52.520008,
+    lon: 13.404954
+  } 
+});
+
+// by zip code https://openweathermap.org/api/forecast30#zip-year
+app.service('weather').find({ 
+  query: { 
+    endpoint: 'forecast/climatic', 
+    zipCode: "18057", 
+    countryCode: "DE"
+  } 
+});
+```
+
+
 ### `create(data)`
 
-#### [current weather](https://openweathermap.org/current)
+#### [Current weather](https://openweathermap.org/current)
 ```js
+// by city name https://openweathermap.org/current#name
+app.service('weather').create({ 
+  endpoint: 'weather', 
+  cityName: "Munich", 
+  stateCode: "DE"
+});
+
+// by city id https://openweathermap.org/current#cityid
 app.service('weather').create({ 
   endpoint: 'weather',
   cityId: 2844588
 });
+
+// by geo coordinates https://openweathermap.org/current#geo
+app.service('weather').create({ 
+  endpoint: 'weather', 
+  lat: 52.520008,
+  lon: 13.404954
+});
+
+// by zip code https://openweathermap.org/current#zip
+app.service('weather').create({ 
+  endpoint: 'weather', 
+  zipCode: "18057", 
+  countryCode: "DE"
+});
 ```
 
-#### [onecall](https://openweathermap.org/api/one-call-api):
+#### [Onecall](https://openweathermap.org/api/one-call-api)
 ```js
 app.service('weather').create({ 
   endpoint: 'onecall', 
@@ -84,19 +298,183 @@ app.service('weather').create({
 });
 ```
 
+#### [Forecast](https://openweathermap.org/forecast5)
+
+```js
+// by city name https://openweathermap.org/forecast5#name5
+app.service('weather').create({ 
+  endpoint: 'forecast', 
+  cityName: "Munich", 
+  stateCode: "DE"
+});
+
+// by city id https://openweathermap.org/forecast5#cityid5
+app.service('weather').create({ 
+  endpoint: 'forecast', 
+  cityId: 2844588 
+});
+
+// by geo coordinates https://openweathermap.org/forecast5#geo5
+app.service('weather').create({ 
+  endpoint: 'forecast', 
+  lat: 52.520008,
+  lon: 13.404954 
+});
+
+// by zip code https://openweathermap.org/forecast5#zip
+app.service('weather').create({ 
+  endpoint: 'forecast', 
+  zipCode: "18057", 
+  countryCode: "DE" 
+});
+```
+
+#### [Hourly forecast](https://openweathermap.org/api/hourly-forecast)
+
+```js
+// by city name https://openweathermap.org/api/hourly-forecast#name5
+app.service('weather').create({ 
+  endpoint: 'forecast/hourly', 
+  cityName: "Munich", 
+  stateCode: "DE"
+});
+
+// by city id https://openweathermap.org/api/hourly-forecast#cityid5
+app.service('weather').create({ 
+  endpoint: 'forecast/hourly', 
+  cityId: 2844588  
+});
+
+// by geo coordinates https://openweathermap.org/api/hourly-forecast#geo5
+app.service('weather').create({ 
+  endpoint: 'forecast/hourly', 
+  lat: 52.520008,
+  lon: 13.404954 
+});
+
+// by zip code https://openweathermap.org/api/hourly-forecast#zip
+app.service('weather').create({ 
+  endpoint: 'forecast/hourly', 
+  zipCode: "18057", 
+  countryCode: "DE" 
+});
+```
+
+#### [Daily forecast](https://openweathermap.org/forecast16)
+```js
+// by city name https://openweathermap.org/forecast16#name16
+app.service('weather').create({ 
+  endpoint: 'forecast/daily', 
+  cityName: "Munich", 
+  stateCode: "DE"
+});
+
+// by city id https://openweathermap.org/forecast16#cityid16
+app.service('weather').create({ 
+  endpoint: 'forecast/daily', 
+  cityId: 2844588 
+});
+
+// by geo coordinates https://openweathermap.org/forecast16#geo16
+app.service('weather').create({ 
+  endpoint: 'forecast/daily', 
+  lat: 52.520008,
+  lon: 13.404954 
+});
+
+// by zip code https://openweathermap.org/forecast16#zip
+app.service('weather').create({ 
+  endpoint: 'forecast/daily', 
+  zipCode: "18057", 
+  countryCode: "DE" 
+});
+```
+
+#### [Climatic forecast](https://openweathermap.org/api/forecast30)
+
+```js
+// by city name https://openweathermap.org/api/forecast30#name-year
+app.service('weather').create({ 
+  endpoint: 'forecast/climatic', 
+  cityName: "Munich", 
+  stateCode: "DE"
+});
+
+// by city id https://openweathermap.org/api/forecast30#cityid-year
+app.service('weather').create({ 
+  endpoint: 'forecast/climatic', 
+  cityId: 2844588 
+});
+
+// by geo coordinates https://openweathermap.org/api/forecast30#geo-year
+app.service('weather').create({ 
+  endpoint: 'forecast/climatic', 
+  lat: 52.520008
+  lon: 13.404954 
+});
+
+// by zip code https://openweathermap.org/api/forecast30#zip-year
+app.service('weather').create({ 
+  endpoint: 'forecast/climatic', 
+  zipCode: "18057", 
+  countryCode: "DE" 
+});
+```
 ### `currentWeatherData(data)`
+
 ```js
 app.service('weather').currentWeatherData({ 
   cityId: 2844588
 });
 ```
 
-#### `oneCall(data)`
+### `oneCall(data)`
+
 ```js
 app.service('weather').oneCall({
   lat: 52.520008,
   lon: 13.404954
 });
+```
+
+### `fiveDay3HourForecast(data)`
+
+```js
+app.service('weather').fiveDay3HourForecast({
+  cityName: "Munich", 
+  stateCode: "DE", 
+  countryCode: "DE"
+})
+```
+
+### `hourlyForecast4Days(data)`
+
+```js
+app.service('weather').hourlyForecast4Days({
+  cityName: "Munich", 
+  stateCode: "DE", 
+  countryCode: "DE"
+})
+```
+
+### `dailyForecast16Days(data)`
+
+```js
+app.service('weather').dailyForecast16Days({
+  cityName: "Munich", 
+  stateCode: "DE", 
+  countryCode: "DE"
+})
+```
+
+### `climaticForecast30Days(data)`
+
+```js
+app.service('weather').climaticForecast30Days({
+  cityName: "Munich", 
+  stateCode: "DE", 
+  countryCode: "DE"
+})
 ```
 
 ## Testing
