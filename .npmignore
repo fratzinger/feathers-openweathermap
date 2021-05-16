@@ -4,3 +4,8 @@
 
 src-dist
 .temp
+
+.nyc_output
+.vscode
+.github
+coverage
