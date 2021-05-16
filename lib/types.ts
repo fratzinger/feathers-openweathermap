@@ -72,14 +72,6 @@ export interface ByZipCode {
   countryCode?: string
 }
 
-export type Endpoint = 
-  "weather" | 
-  "forecast/hourly" | 
-  "onecall" | 
-  "forecast/daily" | 
-  "forecast/climate" |
-  "forecast";
-
 export type Unit = "standard" | "metric" | "imperial";
 export type Mode = "json" | "html" | "xml";
 
@@ -376,6 +368,17 @@ export type WeatherCondition = {
 
 //#endregion
 
+export type Endpoint = 
+  "weather" | 
+  "forecast/hourly" | 
+  "onecall" | 
+  "forecast/daily" | 
+  "forecast/climate" |
+  "forecast" |
+  "air_pollution" |
+  "air_pollution/forecast" |
+  "air_pollution/history";
+
 export type T = number;
 
 export type AnyData = 
@@ -384,7 +387,10 @@ export type AnyData =
   DailyForecast16DaysData |
   ClimaticForeCast30DaysData |
   FiveDay3HourForecastData |
-  HourlyForecast4DaysData;
+  HourlyForecast4DaysData |
+  AirPollutionCurrentData |
+  AirPollutionForecastData |
+  AirPollutionHistoricalData;
 
 export type AnyResult = 
   CurrentWeatherDataResult | 
@@ -392,101 +398,152 @@ export type AnyResult =
   DailyForecast16DaysResult |
   ClimaticForeCast30DaysResult |
   FiveDay3HourForecastResult |
-  HourlyForecast4DaysResult;
+  HourlyForecast4DaysResult |
+  AirPollutionResult;
 
+//#region current weather
 
-//#region daily forecast 16 days
-
-export type DailyForecast16DaysData = 
+export type CurrentWeatherDataData = 
   (ByCityName | ByCityId | ByGeoGraphicCoordinates | ByZipCode) &
-  Partial<WithAppId & WithV & WithLangModeUnits> & 
-  { cnt?: number };
+  Partial<WithAppId & WithV & WithLang & WithUnits>;
 
-export interface DailyForecast16DaysResult {
-  city: {
-    id: number
-    name: string
-    coord: {
-      lat: Latitude
-      lon: Longitude
-    }
-    country: string
-    population: number
-    timezone: number
+export interface CurrentWeatherDataResult {
+  base: string
+  clouds: {
+    all: number
   }
   cod: number
-  message: number
-  cnt: number
-  list: {
-    dt: number
-    sunrise: number
-    sunset: number
-    temp: {
-      day: T
-      min: T
-      max: T
-      night: T
-      eve: T
-      morn: T
-    }
-    feels_like: {
-      day: T
-      night: T
-      eve: T
-      morn: T
-    }
+  coord: {
+    lon: Longitude
+    lat: Latitude
+  },
+  dt: number
+  id: number
+  main: {
+    temp: T
+    feels_like: T
+    temp_min: T
+    temp_max: T
     pressure: number
     humidity: number
-    weather: [WeatherCondition]
-    speed: number
+  }
+  name: string
+  rain?: {
+    "1h"?: number
+    "3h"?: number
+  }
+  snow?: {
+    "1h"?: number
+    "3h"?: number
+  }
+  sys: {
+    type: number
+    id: number
+    message: number
+    country: string
+    sunrise: number
+    sunset: number
+  }
+  timezone: number
+  visibility: number
+  weather: [WeatherCondition]
+  wind: {
     deg: number
-    gust: number
-    clouds: number
-    pop: number
-  }[]
+    speed: number
+  }
 }
 
 //#endregion
 
-//#region climatic forecast 30 days
+//#region onecall
 
-export type ClimaticForeCast30DaysData =
-  (ByCityName | ByCityId | ByGeoGraphicCoordinates | ByZipCode) &
-  Partial<WithAppId & WithV & WithLangModeUnits> & 
-  { cnt?: number };
+export type OneCallData = 
+  ByGeoGraphicCoordinates &
+  { exclude?: ("current"|"minutely"|"hourly"|"daily"|"alerts")[] } &
+  Partial<WithAppId & WithV & WithLangModeUnits>;
 
-export interface ClimaticForeCast30DaysResult {
-  cod: number
-  city: {
-    id: number
-    name: string
-    coord: {
-      lat: Latitude
-      lon: Longitude
-    }
-    country: string
+export interface OneCallResult {
+  current: OneCallResultCurrent
+  daily: FixedLengthArray<OneCallResultDaily, 8>
+  hourly: FixedLengthArray<OneCallResultHourly, 48>
+  lat: Latitude
+  lon: Longitude
+  minutely: FixedLengthArray<OneCallResultMinutely, 61>
+  timezone: string
+  timezone_offset: number
+}
+
+export interface OneCallResultCurrent {
+  clouds: number
+  dew_point: number
+  dt: number
+  feels_like: number
+  humidity: number
+  pressure: number
+  sunrise: number
+  sunset: number
+  temp: number
+  uvi: number
+  visibility: number
+  weather: [WeatherCondition]
+  wind_deg: number
+  wind_speed: number
+}
+
+export interface OneCallResultDaily {
+  clouds: number
+  dew_point: number
+  dt: number
+  feels_like: {
+    day: number
+    eve: number
+    morn: number
+    night: number
   }
-  message: string
-  list: {
-    dt: number
-    sunrise: number
-    sunset: number
-    temp: {
-      day: T
-      min: T
-      max: T
-      night: T
-      eve: T
-      morn: T
-    }
-    pressure: number
-    humidity: number
-    weather: [WeatherCondition]
-    speed: number
-    deg: number
-    clouds: number
-    rain: number
-  }[]
+  humidity: number
+  moon_phase: number
+  moonrise: number
+  moonset: number
+  pop: number
+  pressure: number
+  rain: number
+  sunrise: number
+  sunset: number
+  temp: {
+    day: number
+    eve: number
+    max: number
+    min: number
+    morn: number
+    night: number
+  }
+  uvi: number
+  weather: [WeatherCondition]
+  wind_deg: number
+  wind_gust: number
+  wind_speed: number
+}
+
+export interface OneCallResultHourly {
+  clouds: number
+  dew_point: number
+  dt: number
+  feels_like: number
+  humidity: number
+  pop: number
+  pressure: number
+  temp: number
+  uvi: number
+  visibility: number
+  weather: [WeatherCondition]
+  wind_deg: number
+  wind_gust: number
+  wind_speed: number
+}
+
+export interface OneCallResultMinutely {
+  dt: number
+  precipitation: number
 }
 
 //#endregion
@@ -608,152 +665,138 @@ export interface HourlyForecast4DaysResult {
 
 //#endregion
 
-//#region onecall
+//#region daily forecast 16 days
 
-export type OneCallData = 
-  ByGeoGraphicCoordinates &
-  { exclude?: ("current"|"minutely"|"hourly"|"daily"|"alerts")[] } &
-  Partial<WithAppId & WithV & WithLangModeUnits>;
-
-export interface OneCallResult {
-  current: OneCallResultCurrent
-  daily: FixedLengthArray<OneCallResultDaily, 8>
-  hourly: FixedLengthArray<OneCallResultHourly, 48>
-  lat: Latitude
-  lon: Longitude
-  minutely: FixedLengthArray<OneCallResultMinutely, 61>
-  timezone: string
-  timezone_offset: number
-}
-
-export interface OneCallResultCurrent {
-  clouds: number
-  dew_point: number
-  dt: number
-  feels_like: number
-  humidity: number
-  pressure: number
-  sunrise: number
-  sunset: number
-  temp: number
-  uvi: number
-  visibility: number
-  weather: [WeatherCondition]
-  wind_deg: number
-  wind_speed: number
-}
-
-export interface OneCallResultDaily {
-  clouds: number
-  dew_point: number
-  dt: number
-  feels_like: {
-    day: number
-    eve: number
-    morn: number
-    night: number
-  }
-  humidity: number
-  moon_phase: number
-  moonrise: number
-  moonset: number
-  pop: number
-  pressure: number
-  rain: number
-  sunrise: number
-  sunset: number
-  temp: {
-    day: number
-    eve: number
-    max: number
-    min: number
-    morn: number
-    night: number
-  }
-  uvi: number
-  weather: [WeatherCondition]
-  wind_deg: number
-  wind_gust: number
-  wind_speed: number
-}
-
-export interface OneCallResultHourly {
-  clouds: number
-  dew_point: number
-  dt: number
-  feels_like: number
-  humidity: number
-  pop: number
-  pressure: number
-  temp: number
-  uvi: number
-  visibility: number
-  weather: [WeatherCondition]
-  wind_deg: number
-  wind_gust: number
-  wind_speed: number
-}
-
-export interface OneCallResultMinutely {
-  dt: number
-  precipitation: number
-}
-
-//#endregion
-
-//#region current weather
-
-export type CurrentWeatherDataData = 
+export type DailyForecast16DaysData = 
   (ByCityName | ByCityId | ByGeoGraphicCoordinates | ByZipCode) &
-  Partial<WithAppId & WithV & WithLang & WithUnits>;
+  Partial<WithAppId & WithV & WithLangModeUnits> & 
+  { cnt?: number };
 
-export interface CurrentWeatherDataResult {
-  base: string
-  clouds: {
-    all: number
+export interface DailyForecast16DaysResult {
+  city: {
+    id: number
+    name: string
+    coord: {
+      lat: Latitude
+      lon: Longitude
+    }
+    country: string
+    population: number
+    timezone: number
   }
   cod: number
-  coord: {
-    lon: Longitude
-    lat: Latitude
-  },
-  dt: number
-  id: number
-  main: {
-    temp: T
-    feels_like: T
-    temp_min: T
-    temp_max: T
-    pressure: number
-    humidity: number
-  }
-  name: string
-  rain?: {
-    "1h"?: number
-    "3h"?: number
-  }
-  snow?: {
-    "1h"?: number
-    "3h"?: number
-  }
-  sys: {
-    type: number
-    id: number
-    message: number
-    country: string
+  message: number
+  cnt: number
+  list: {
+    dt: number
     sunrise: number
     sunset: number
-  }
-  timezone: number
-  visibility: number
-  weather: [WeatherCondition]
-  wind: {
-    deg: number
+    temp: {
+      day: T
+      min: T
+      max: T
+      night: T
+      eve: T
+      morn: T
+    }
+    feels_like: {
+      day: T
+      night: T
+      eve: T
+      morn: T
+    }
+    pressure: number
+    humidity: number
+    weather: [WeatherCondition]
     speed: number
-  }
+    deg: number
+    gust: number
+    clouds: number
+    pop: number
+  }[]
 }
 
 //#endregion
 
+//#region climatic forecast 30 days
 
+export type ClimaticForeCast30DaysData =
+  (ByCityName | ByCityId | ByGeoGraphicCoordinates | ByZipCode) &
+  Partial<WithAppId & WithV & WithLangModeUnits> & 
+  { cnt?: number };
 
+export interface ClimaticForeCast30DaysResult {
+  cod: number
+  city: {
+    id: number
+    name: string
+    coord: {
+      lat: Latitude
+      lon: Longitude
+    }
+    country: string
+  }
+  message: string
+  list: {
+    dt: number
+    sunrise: number
+    sunset: number
+    temp: {
+      day: T
+      min: T
+      max: T
+      night: T
+      eve: T
+      morn: T
+    }
+    pressure: number
+    humidity: number
+    weather: [WeatherCondition]
+    speed: number
+    deg: number
+    clouds: number
+    rain: number
+  }[]
+}
+
+//#endregion
+
+//#region air pollution
+
+export type AirPollutionCurrentData =
+  ByGeoGraphicCoordinates &
+  Partial<WithAppId & WithV>;
+
+export type AirPollutionForecastData =
+  ByGeoGraphicCoordinates &
+  Partial<WithAppId & WithV>;
+
+export type AirPollutionHistoricalData =
+  ByGeoGraphicCoordinates &
+  Partial<WithAppId & WithV> &
+  { start: number, end: number };
+
+export interface AirPollutionResult {
+  coord: [
+    number,
+    number
+  ]
+  list: {
+    dt: number
+    main: {
+      aqi: 1 | 2 | 3 | 4 | 5
+    }
+    components: {
+      co: number
+      no: number
+      no2: number
+      o3: number
+      so2: number
+      pm2_5: number
+      pm10: number
+      nh3: number
+    }
+  }[]
+}
+
+//#endregion

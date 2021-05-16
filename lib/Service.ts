@@ -15,7 +15,11 @@ import {
   ClimaticForeCast30DaysData,
   FiveDay3HourForecastData,
   FiveDay3HourForecastResult,
-  HourlyForecast4DaysResult
+  HourlyForecast4DaysResult,
+  AirPollutionCurrentData,
+  AirPollutionResult,
+  AirPollutionForecastData,
+  AirPollutionHistoricalData
 } from "./types";
 import {
   SetOptional,
@@ -23,6 +27,7 @@ import {
 } from "type-fest";
 import got from "got/dist/source";
 import { Params } from "@feathersjs/feathers";
+import { BadRequest } from "@feathersjs/errors";
 
 const makeOptions = (options: SetRequired<Partial<OWMServiceOptions>, "appid">): OWMServiceOptions => {
   return {
@@ -48,6 +53,9 @@ export class Service {
   async find(params: Params & { query: HourlyForecast4DaysData & { endpoint: "forecast/hourly" } }): Promise<HourlyForecast4DaysResult>
   async find(params: Params & { query: DailyForecast16DaysData & { endpoint: "forecast/daily" } }): Promise<DailyForecast16DaysResult>
   async find(params: Params & { query: ClimaticForeCast30DaysData & { endpoint: "forecast/climate" } }): Promise<ClimaticForeCast30DaysResult>
+  async find(params: Params & { query: AirPollutionCurrentData & { endpoint: "air_pollution" } }): Promise<AirPollutionResult>
+  async find(params: Params & { query: AirPollutionForecastData & { endpoint: "air_pollution/forecast" } }): Promise<AirPollutionResult>
+  async find(params: Params & { query: AirPollutionHistoricalData & { endpoint: "air_pollution/history" } }): Promise<AirPollutionResult>
   async find(params: Params & { query: AnyData & { endpoint: Endpoint }}): Promise<AnyResult> {
     return await this.makeRequest(params.query, params.query.endpoint);
   }
@@ -58,11 +66,14 @@ export class Service {
   async create(data: HourlyForecast4DaysData & { endpoint: "forecast/hourly" }): Promise<HourlyForecast4DaysResult>
   async create(data: DailyForecast16DaysData & { endpoint: "forecast/daily" }): Promise<DailyForecast16DaysResult>
   async create(data: ClimaticForeCast30DaysData & { endpoint: "forecast/climate" }): Promise<ClimaticForeCast30DaysResult>
+  async create(data: AirPollutionCurrentData & { endpoint: "air_pollution" }): Promise<AirPollutionResult>
+  async create(data: AirPollutionForecastData & { endpoint: "air_pollution/forecast" }): Promise<AirPollutionResult>
+  async create(data: AirPollutionHistoricalData & { endpoint: "air_pollution/history" }): Promise<AirPollutionResult>
   async create(data: AnyData & { endpoint: Endpoint }): Promise<AnyResult> {
     return await this.makeRequest(data, data.endpoint);
   }
 
-  private composeSearchParamsFromData(data): QueryParams {
+  private composeSearchParamsFromData(data: Record<string, any>): QueryParams {
     data = Object.assign({}, data);
     const appid = data?.appid || this.options.appid;
     const lang = data?.lang || this.options.lang;
@@ -92,6 +103,22 @@ export class Service {
       query.zip = zip.join(",");
     }
 
+    const keysToIgnore = [
+      "cityName",
+      "stateCode",
+      "countryCode",
+      "cityId",
+      "lat",
+      "lon",
+      "zipCode",
+      "countryCode"
+    ];
+
+    for (const key in data) {
+      if (keysToIgnore.includes(key)) { continue; }
+      query[key] = data[key];
+    }
+
     return query;
   }
 
@@ -101,14 +128,18 @@ export class Service {
   }
 
   private async makeRequest<D extends AnyData, R extends AnyResult>(data: D, endpoint: Endpoint): Promise<R> {
-    const queryParams = this.composeSearchParamsFromData(data);
-    const result = await got(this.getUrl(data, endpoint), {
-      searchParams: queryParams as unknown as Record<string, string | number | boolean>
-    });
-    if (queryParams.mode === "json") {
-      return JSON.parse(result.body);
-    } else {
-      return result.body as unknown as R;
+    try {
+      const queryParams = this.composeSearchParamsFromData(data);
+      const result = await got(this.getUrl(data, endpoint), {
+        searchParams: queryParams as unknown as Record<string, string | number | boolean>
+      });
+      if (queryParams.mode === "json") {
+        return JSON.parse(result.body);
+      } else {
+        return result.body as unknown as R;
+      }
+    } catch (err) {
+      new BadRequest("unprocessable", err);
     }
   }
 
@@ -138,5 +169,17 @@ export class Service {
 
   async climaticForecast30Days(data: ClimaticForeCast30DaysData): Promise<ClimaticForeCast30DaysResult> {
     return await this.makeRequest(data, "forecast/climate");
+  }
+
+  async airPollutionCurrent(data: AirPollutionCurrentData): Promise<AirPollutionResult> {
+    return await this.makeRequest(data, "air_pollution");
+  }
+
+  async airPollutionForecast(data: AirPollutionForecastData): Promise<AirPollutionResult> {
+    return await this.makeRequest(data, "air_pollution/forecast");
+  }
+
+  async airPollutionHistorical(data: AirPollutionHistoricalData): Promise<AirPollutionResult> {
+    return await this.makeRequest(data, "air_pollution/history");
   }
 }

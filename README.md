@@ -17,6 +17,7 @@
 - [Hourly forecast](https://openweathermap.org/api/hourly-forecast) (*Included in the Developer, Professional and Enterprise subscription plans*)
 - [Daily forecast](https://openweathermap.org/forecast16) (*Included in all paid subscription plans*)
 - [Climatic forecast](https://openweathermap.org/api/forecast30) (*Included in the Developer, Professional and Enterprise subscription plans*)
+- [Air pollution](https://openweathermap.org/api/air-pollution) (*free*)
 
 ## Installation
 
@@ -256,6 +257,38 @@ app.service('weather').find({
 });
 ```
 
+#### [Air pollution](https://openweathermap.org/api/air-pollution)
+
+```js
+// current air pollution https://openweathermap.org/api/air-pollution#current
+app.service('weather').find({ 
+  query: { 
+    endpoint: "air_pollution", 
+    lat: 52.520008, 
+    lon: 13.404954 
+  } 
+});
+
+// forecast air pollution https://openweathermap.org/api/air-pollution#current
+app.service('weather').find({ 
+  query: { 
+    endpoint: "air_pollution/forecast", 
+    lat: 52.520008, 
+    lon: 13.404954 
+  } 
+});
+
+// historical air pollution https://openweathermap.org/api/air-pollution#history
+app.service('weather').find({ 
+  query: { 
+    endpoint: "air_pollution/history", 
+    start: 1606223802, 
+    end: 1606482999, 
+    lat: 52.520008, 
+    lon: 13.404954
+  } 
+});
+```
 
 ### `create(data)`
 
@@ -420,6 +453,34 @@ app.service('weather').create({
   countryCode: "DE" 
 });
 ```
+
+#### [Air pollution](https://openweathermap.org/api/air-pollution)
+
+```js
+// current air pollution https://openweathermap.org/api/air-pollution#current
+app.service('weather').create({ 
+  endpoint: "air_pollution",
+  lat: 52.520008,
+  lon: 13.404954
+});
+
+// forecast air pollution https://openweathermap.org/api/air-pollution#current
+app.service('weather').create({ 
+  endpoint: "air_pollution/forecast",
+  lat: 52.520008,
+  lon: 13.404954
+});
+
+// historical air pollution https://openweathermap.org/api/air-pollution#history
+app.service('weather').create({
+    endpoint: "air_pollution/history",
+    start: 1606223802,
+    end: 1606482999,
+    lat: 52.520008,
+    lon: 13.404954
+});
+```
+
 ### `currentWeatherData(data)`
 
 ```js
@@ -475,6 +536,35 @@ app.service('weather').climaticForecast30Days({
   stateCode: "DE", 
   countryCode: "DE"
 })
+```
+
+### `airPollutionCurrent(data)`
+
+```js
+app.service('weather').airPollutionCurrent({ 
+  lat: 52.520008, 
+  lon: 13.404954 
+});
+```
+
+### `airPollutionForecast(data)`
+
+```js
+app.service('weather').airPollutionForecast({ 
+  lat: 52.520008, 
+  lon: 13.404954 
+});
+```
+
+### `airPollutionHistorical(data)`
+
+```js
+app.service('weather').airPollutionCurrent({ 
+  lat: 52.520008, 
+  lon: 13.404954,
+  start: 1606223802, 
+  end: 1606482999
+});
 ```
 
 ## Testing

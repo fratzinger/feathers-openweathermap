@@ -240,4 +240,75 @@ describe("service.test.ts", function() {
       assert.strictEqual(result.city.name, "Rostock", "found correct city");
     });
   });
+
+  describe("air_pollution", function() {
+    describe("current air pollution", function() {
+      it("find: get current air pollution", async function() {
+        const result = await service.find({ query: { endpoint: "air_pollution", lat: 52.520008, lon: 13.404954 } });
+        assert.deepStrictEqual(result.coord, { lat: 52.52, lon: 13.405 }, "returned something");
+        assert.strictEqual(result.list.length, 1, "has one list entry");
+        assert.ok(1 <= result.list[0].main.aqi && result.list[0].main.aqi <= 5, "air quality is between 1 and 5");
+      });
+
+      it("create: get current air pollution", async function() {
+        const result = await service.create({ endpoint: "air_pollution", lat: 52.520008, lon: 13.404954 });
+        assert.deepStrictEqual(result.coord, { lat: 52.52, lon: 13.405 }, "returned something");
+        assert.strictEqual(result.list.length, 1, "has one list entry");
+        assert.ok(1 <= result.list[0].main.aqi && result.list[0].main.aqi <= 5, "air quality is between 1 and 5");
+      });
+
+      it("custom: get current air pollution", async function() {
+        const result = await service.airPollutionCurrent({ lat: 52.520008, lon: 13.404954 });
+        assert.deepStrictEqual(result.coord, { lat: 52.52, lon: 13.405 }, "returned something");
+        assert.strictEqual(result.list.length, 1, "has one list entry");
+        assert.ok(1 <= result.list[0].main.aqi && result.list[0].main.aqi <= 5, "air quality is between 1 and 5");
+      });
+    });
+
+    describe("forecast air pollution", function() {
+      it("find: get forecast air pollution", async function() {
+        const result = await service.find({ query: { endpoint: "air_pollution/forecast", lat: 52.520008, lon: 13.404954 } });
+        assert.deepStrictEqual(result.coord, { lat: 52.52, lon: 13.405 }, "returned something");
+        assert.strictEqual(result.list.length, 241, "has full list");
+        assert.ok(1 <= result.list[0].main.aqi && result.list[0].main.aqi <= 5, "air quality is between 1 and 5");
+      });
+
+      it("create: get forecast air pollution", async function() {
+        const result = await service.create({ endpoint: "air_pollution/forecast", lat: 52.520008, lon: 13.404954 });
+        assert.deepStrictEqual(result.coord, { lat: 52.52, lon: 13.405 }, "returned something");
+        assert.strictEqual(result.list.length, 241, "has full list");
+        assert.ok(1 <= result.list[0].main.aqi && result.list[0].main.aqi <= 5, "air quality is between 1 and 5");
+      });
+
+      it("custom: get forecast air pollution", async function() {
+        const result = await service.airPollutionForecast({ lat: 52.520008, lon: 13.404954 });
+        assert.deepStrictEqual(result.coord, { lat: 52.52, lon: 13.405 }, "returned something");
+        assert.strictEqual(result.list.length, 241, "has full list");
+        assert.ok(1 <= result.list[0].main.aqi && result.list[0].main.aqi <= 5, "air quality is between 1 and 5");
+      });
+    });
+
+    describe("historical air pollution", function() {
+      it("find: get historical air pollution", async function() {
+        const result = await service.find({ query: { endpoint: "air_pollution/history", start: 1606223802, end: 1606482999, lat: 52.520008, lon: 13.404954 } });
+        assert.deepStrictEqual(result.coord, { lat: 52.52, lon: 13.405 }, "returned something");
+        assert.strictEqual(result.list.length, 61, "has full list");
+        assert.ok(1 <= result.list[0].main.aqi && result.list[0].main.aqi <= 5, "air quality is between 1 and 5");
+      });
+
+      it("create: get historical air pollution", async function() {
+        const result = await service.create({ endpoint: "air_pollution/history", start: 1606223802, end: 1606482999, lat: 52.520008, lon: 13.404954 });
+        assert.deepStrictEqual(result.coord, { lat: 52.52, lon: 13.405 }, "returned something");
+        assert.strictEqual(result.list.length, 61, "has full list");
+        assert.ok(1 <= result.list[0].main.aqi && result.list[0].main.aqi <= 5, "air quality is between 1 and 5");
+      });
+
+      it("custom: get historical air pollution", async function() {
+        const result = await service.airPollutionHistorical({ start: 1606223802, end: 1606482999, lat: 52.520008, lon: 13.404954 });
+        assert.deepStrictEqual(result.coord, { lat: 52.52, lon: 13.405 }, "returned something");
+        assert.strictEqual(result.list.length, 61, "has full list");
+        assert.ok(1 <= result.list[0].main.aqi && result.list[0].main.aqi <= 5, "air quality is between 1 and 5");
+      });
+    });
+  });
 });
