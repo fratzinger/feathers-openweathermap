@@ -32,61 +32,83 @@ import { Params } from "@feathersjs/feathers";
 import { BadRequest, TooManyRequests } from "@feathersjs/errors";
 
 const makeOptions = (options: SetRequired<Partial<OWMServiceOptions>, "appid">): OWMServiceOptions => {
-  let limits: CallCounterLimits;
-  let isThrottled: boolean;
-  // FIXME
-  // wtf am i doing
-  /*
-  let plan: Plan = Object.values(Plan).includes(options.plan)
-
-  const OWMPlan = [
-    {
-      minute: 60,
-      month: 1000000
-    },
-    {
-      minute: 600,
-      month: 10000000
-    },
-    {
-      minute: 3000,
-      month: 100000000
-    },
-    {
-      minute: 30000,
-      month: 1000000000
-    },
-    {
-      minute: 200000,
-      month: 5000000000
-    },
-  ];
-
-  if(options.plan_throttle !== false) {
-    const limits = {
-      minutes: OWMPlan[]
-    }
-
-  }
-  */
-
-
-  return {
+  let newOptions: OWMServiceOptions = {
     v: "2.5",
     mode: "json",
     lang: "en",
     units: "standard",
     plan: Plan.Free,
-    plan_throttle: true,
     limits: {
       minute: 0,
       hour: 0,
       day: 0,
+      onecall_minute: 0,
       onecall_hour: 0,
       onecall_day: 0
     },
+    plan_throttle: true,
     ...options
   };
+
+  const OWMPlan = [
+    {
+      minute: 60,
+      month: 1000000,
+      onecall_day: 1000,
+      onecall_month: 30000
+    },
+    {
+      minute: 600,
+      month: 10000000,
+      onecall_day: 2000,
+      onecall_month: 60000
+    },
+    {
+      minute: 3000,
+      month: 100000000,
+      onecall_minute: 3000,
+      onecall_month: 100000000
+    },
+    {
+      minute: 30000,
+      month: 1000000000,
+      onecall_minute: 30000,
+      onecall_month: 1000000000
+    },
+    {
+      minute: 200000,
+      month: 5000000000,
+      onecall_minute: 200000,
+      onecall_month: 5000000000
+    },
+  ];
+
+  if(newOptions.plan_throttle) { // Split monthly max calls
+    // Weather API
+    let monthtlyLimit = OWMPlan[newOptions.plan].month;
+    newOptions.limits.day = Math.floor(monthtlyLimit / 30);
+    newOptions.limits.hour = Math.floor(monthtlyLimit / 30 / 24);
+    newOptions.limits.minute = Math.floor(monthtlyLimit / 30 / 24 / 60);
+    // Onecall API
+    monthtlyLimit = OWMPlan[newOptions.plan].onecall_month;
+    newOptions.limits.onecall_day = Math.floor(monthtlyLimit / 30);
+    newOptions.limits.onecall_hour = Math.floor(monthtlyLimit / 30 / 24);
+    newOptions.limits.onecall_minute = Math.floor(monthtlyLimit / 30 / 24 / 60);
+
+  } else { // Use minute max calls to calculate hour. Use monthly for daily value
+    newOptions.limits.day = Math.floor(OWMPlan[newOptions.plan].month / 30);
+    newOptions.limits.hour = OWMPlan[newOptions.plan].minute * 60;
+    newOptions.limits.minute = OWMPlan[newOptions.plan].minute;
+
+    monthtlyLimit = ;
+    newOptions.limits.onecall_day = Math.floor(OWMPlan[newOptions.plan].onecall_month / 30);
+    newOptions.limits.onecall_hour = Math.floor(monthtlyLimit / 30 / 24);
+    newOptions.limits.onecall_minute = OWMPlan[newOptions.plan].onecall_minute;
+  }
+
+
+  console.log(newOptions);
+  return newOptions;
 };
 
 const baseUrl = "https://api.openweathermap.org/data";
@@ -106,7 +128,7 @@ export class Service {
       onecall_minute: 0,
       onecall_hour: 0,
       onecall_day: 0
-    }
+    };
     this.createCounterTimer();
   }
 
