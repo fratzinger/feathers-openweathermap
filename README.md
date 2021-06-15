@@ -44,6 +44,9 @@ app.use("/weather", new Service({
 - `mode` (*optional*, default: `'json'`) - the results format (possible: `'json'`, `'xml'`, `'html'`)
 - `lang` (*optional*, default: `'en'`) - the language of the result. [info](https://openweathermap.org/current#multi)
 - `units` (*optional*, default: `'standard'`) - Units of measurement. `'standard'`, `'metric'` and `'imperial'` units are available.
+- `call_minute` (*optional*, default: `60`) - Maximum number of request per minute (free plan). Set to 0 to disable.
+- `call_hour` (*optional*, default: `3600`) - Maximum number of request per hour (free plan). Set to 0 to disable.
+- `call_day` (*optional*, default: `35714`) - Maximum number of request per 24h, current default is 1,000,000 api call per month divided by 28 days (free plan).  Set to 0 to disable.
 
 ## Methods
 

@@ -2,6 +2,7 @@ import {
   CurrentWeatherDataData, 
   Endpoint, 
   OWMServiceOptions,
+  CallCounter,
   CurrentWeatherDataResult,
   HourlyForecast4DaysData,
   QueryParams,
@@ -27,7 +28,7 @@ import {
 } from "type-fest";
 import got from "got/dist/source";
 import { Params } from "@feathersjs/feathers";
-import { BadRequest } from "@feathersjs/errors";
+import { BadRequest, TooManyRequests } from "@feathersjs/errors";
 
 const makeOptions = (options: SetRequired<Partial<OWMServiceOptions>, "appid">): OWMServiceOptions => {
   return {
@@ -35,6 +36,9 @@ const makeOptions = (options: SetRequired<Partial<OWMServiceOptions>, "appid">):
     mode: "json",
     lang: "en",
     units: "standard",
+    limit_minute: 60,
+    limit_hour: 3600,
+    limit_day: 35714,
     ...options
   };
 };
@@ -43,8 +47,17 @@ const baseUrl = "https://api.openweathermap.org/data";
 
 export class Service {
   options: OWMServiceOptions
-  constructor(options: SetOptional<OWMServiceOptions, "v" | "lang" | "mode" | "units">) {
+  callCounter: CallCounter
+
+  constructor(options: SetOptional<OWMServiceOptions, "v" | "lang" | "mode" | "units" | "limit_minute" | "limit_hour" | "limit_day">) {
     this.options = makeOptions(options);
+    // Initialize API limiter
+    this.callCounter = {
+      minute: 0,
+      hour: 0,
+      day: 0
+    }
+    this.createCounterTimer();
   }
 
   async find(params: Params & { query: CurrentWeatherDataData & { endpoint: "weather" } }): Promise<CurrentWeatherDataResult>
@@ -72,6 +85,44 @@ export class Service {
   async create(data: AnyData & { endpoint: Endpoint }): Promise<AnyResult> {
     return await this.makeRequest(data, data.endpoint);
   }
+
+  // Following methods are for the API call counters and limiters
+  private createCounterTimer() {
+    setTimeout(this.clearMinutelyLimit, 60000);
+    setTimeout(this.clearHourlyLimit, 3600000);
+    setTimeout(this.clearDailyLimit, 86400000);
+  }
+  private clearMinutelyLimit() {
+    this.callCounter.minute = 0;
+  }
+  private clearHourlyLimit() {
+    this.callCounter.hour = 0;
+  }
+  private clearDailyLimit() {
+    this.callCounter.day = 0;
+  }
+  // Expose call counters
+  // TODO make this read only
+  public getCallCounters() {
+    return this.callCounter;
+  }
+  private incrementCallCounters() {
+    this.callCounter.minute++;
+    this.callCounter.hour++;
+    this.callCounter.day++;
+  }
+  private checkLimits() {
+    if(this.options.limit_minute > 0 && this.callCounter.minute >= this.options.limit_minute) {
+      return new TooManyRequests("OWM minutely limit reached");
+    }
+    else if(this.options.limit_hour > 0 && this.callCounter.hour >= this.options.limit_hour) {
+      return new TooManyRequests("OWM hourly limit reached");
+    }
+    else if(this.options.limit_day > 0 && this.callCounter.day >= this.options.limit_day) {
+      return new TooManyRequests("OWM minutely limit reached");
+    }
+  }
+  // END: Call counters and limiters
 
   private composeSearchParamsFromData(data: Record<string, any>): QueryParams {
     data = Object.assign({}, data);
@@ -129,10 +180,15 @@ export class Service {
 
   private async makeRequest<D extends AnyData, R extends AnyResult>(data: D, endpoint: Endpoint): Promise<R> {
     try {
+      // Check if call limit is reached before making a request
+      this.checkLimits();
+      
       const queryParams = this.composeSearchParamsFromData(data);
       const result = await got(this.getUrl(data, endpoint), {
         searchParams: queryParams as unknown as Record<string, string | number | boolean>
       });
+
+      this.incrementCallCounters(); // Increment call counter late, avoid counting if an error was thrown.
       if (queryParams.mode === "json") {
         return JSON.parse(result.body);
       } else {

@@ -7,7 +7,16 @@ export interface OWMServiceOptions {
   v: string
   lang: Lang
   mode: Mode
-  units: Unit
+  units: Unit,
+  limit_minute: number,
+  limit_hour: number,
+  limit_day: number
+}
+
+export interface CallCounter {
+	minute: number,
+	hour: number,
+	day: number,
 }
 
 export interface WithAppId {
