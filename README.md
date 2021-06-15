@@ -44,6 +44,48 @@ app.use("/weather", new Service({
 - `mode` (*optional*, default: `'json'`) - the results format (possible: `'json'`, `'xml'`, `'html'`)
 - `lang` (*optional*, default: `'en'`) - the language of the result. [info](https://openweathermap.org/current#multi)
 - `units` (*optional*, default: `'standard'`) - Units of measurement. `'standard'`, `'metric'` and `'imperial'` units are available.
+- `limits` (*optional*, default: See below `limits` object)
+- `plan` (*optional*, default: Plan.Free)
+- `plan_throttle` (*optional*, default: true), calculate limits based on the maximum number of monthly requests.
+
+
+
+### API Call counter and limiter
+
+By default, the selected  `plan` is the Free tier and `plan_throttle` is enabled to make sure you have enough calls to go through the month.
+
+#### Plans
+The the plan option to one of the following:
+| Type of call  | Plan.Free | Plan.Startup | Plan.Developer | Plan.Pro | Plan.Enterprise |
+|--|------|---------|-----------|-----|------------|
+| Weather API - Minute | 60 | 600 | 3,000 | 30,000 | 200,000 |
+| Weather API - Month | 1,000,000 | 10,000,000 | 100,000,000 | 1,000,000,000 | 5,000,000,000 |
+| One Call API - Minute | 1,000/day | 2,000/day | 3,000 | 30,000 | 200,000 |
+| One Call API - Month | 30,000 | 60,000 | 100,000,000 | 1,000,000,000 | 5,000,000,000 |
+
+Define the plan you have with `options.plan`. Default is Plan.Free.
+
+#### Throttle
+Using OWM values, we can do 60 calls per minutes, up to a million per month. This means we could use all our available calls in 15 days or so when calling OWM non-stop. When throttle is enabled, the limits are calculated based on the monthly maximum calls, divided by 30 days and they by hours and minutes.
+
+Exmaple: On the Free plan this mean we can make 1388 calls per hour and 23 calls per minutes (1,000,000 / 30 days / 24 hours / 60 minutes). When the limit is reached we do not send the request to OWM and return a `TooManyRequests` error.
+
+For the Onecall API, there is no minute limiter on the free plan as it would allow for less than 1 request per minute. Hour limits are still calculated.
+
+#### Custom limits
+Throttle or not, feel free to set the limits you want!
+- A value of 0 mean this value won't be limited.
+- If you only provide `day` limits and `plan_throttle` is `true` , we will calculate hour and minute limits (Same if you set hour limits)
+
+```
+limits: {
+  minute: 0,
+  hour: 0,
+  day: 0,
+  onecall_hour: 0,
+  onecall_day: 0
+},
+```
 
 ## Methods
 
