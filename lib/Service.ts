@@ -2,7 +2,8 @@ import {
   CurrentWeatherDataData, 
   Endpoint, 
   OWMServiceOptions,
-  CallCounter,
+  CallCounterLimits,
+  Plan,
   CurrentWeatherDataResult,
   HourlyForecast4DaysData,
   QueryParams,
@@ -31,14 +32,59 @@ import { Params } from "@feathersjs/feathers";
 import { BadRequest, TooManyRequests } from "@feathersjs/errors";
 
 const makeOptions = (options: SetRequired<Partial<OWMServiceOptions>, "appid">): OWMServiceOptions => {
+  let limits: CallCounterLimits;
+  let isThrottled: boolean;
+  // FIXME
+  // wtf am i doing
+  /*
+  let plan: Plan = Object.values(Plan).includes(options.plan)
+
+  const OWMPlan = [
+    {
+      minute: 60,
+      month: 1000000
+    },
+    {
+      minute: 600,
+      month: 10000000
+    },
+    {
+      minute: 3000,
+      month: 100000000
+    },
+    {
+      minute: 30000,
+      month: 1000000000
+    },
+    {
+      minute: 200000,
+      month: 5000000000
+    },
+  ];
+
+  if(options.plan_throttle !== false) {
+    const limits = {
+      minutes: OWMPlan[]
+    }
+
+  }
+  */
+
+
   return {
     v: "2.5",
     mode: "json",
     lang: "en",
     units: "standard",
-    limit_minute: 60,
-    limit_hour: 3600,
-    limit_day: 35714,
+    plan: Plan.Free,
+    plan_throttle: true,
+    limits: {
+      minute: 0,
+      hour: 0,
+      day: 0,
+      onecall_hour: 0,
+      onecall_day: 0
+    },
     ...options
   };
 };
@@ -47,15 +93,19 @@ const baseUrl = "https://api.openweathermap.org/data";
 
 export class Service {
   options: OWMServiceOptions
-  callCounter: CallCounter
+  callCounter: CallCounterLimits
 
-  constructor(options: SetOptional<OWMServiceOptions, "v" | "lang" | "mode" | "units" | "limit_minute" | "limit_hour" | "limit_day">) {
+  constructor(options: SetOptional<OWMServiceOptions, "v" | "lang" | "mode" | "units" | "limits" | "plan" | "plan_throttle">) {
     this.options = makeOptions(options);
+
     // Initialize API limiter
     this.callCounter = {
       minute: 0,
       hour: 0,
-      day: 0
+      day: 0,
+      onecall_minute: 0,
+      onecall_hour: 0,
+      onecall_day: 0
     }
     this.createCounterTimer();
   }
@@ -94,12 +144,16 @@ export class Service {
   }
   private clearMinutelyLimit() {
     this.callCounter.minute = 0;
+    this.callCounter.onecall_minute = 0;
   }
   private clearHourlyLimit() {
     this.callCounter.hour = 0;
+    this.callCounter.onecall_hour = 0;
   }
   private clearDailyLimit() {
     this.callCounter.day = 0;
+    this.callCounter.onecall_day = 0;
+
   }
   // Expose call counters
   // TODO make this read only
@@ -111,16 +165,33 @@ export class Service {
     this.callCounter.hour++;
     this.callCounter.day++;
   }
+  private incrementOnecallCallCounters() {
+    this.callCounter.onecall_minute++;
+    this.callCounter.onecall_hour++;
+    this.callCounter.onecall_day++;
+  }
   private checkLimits() {
-    if(this.options.limit_minute > 0 && this.callCounter.minute >= this.options.limit_minute) {
+    if(this.options.limits.minute > 0 && this.callCounter.minute >= this.options.limits.minute) {
       return new TooManyRequests("OWM minutely limit reached");
     }
-    else if(this.options.limit_hour > 0 && this.callCounter.hour >= this.options.limit_hour) {
+    else if(this.options.limits.hour > 0 && this.callCounter.hour >= this.options.limits.hour) {
       return new TooManyRequests("OWM hourly limit reached");
     }
-    else if(this.options.limit_day > 0 && this.callCounter.day >= this.options.limit_day) {
+    else if(this.options.limits.day > 0 && this.callCounter.day >= this.options.limits.day) {
       return new TooManyRequests("OWM minutely limit reached");
     }
+  }
+  private checkOnecallLimits() {
+    if(this.options.limits.onecall_minute > 0 && this.callCounter.onecall_minute >= this.options.limits.onecall_minute) {
+      return new TooManyRequests("OWM onecall hourly limit reached");
+    }
+    else if(this.options.limits.onecall_hour > 0 && this.callCounter.onecall_hour >= this.options.limits.onecall_hour) {
+      return new TooManyRequests("OWM onecall hourly limit reached");
+    }
+    else if(this.options.limits.onecall_day > 0 && this.callCounter.onecall_day >= this.options.limits.onecall_day) {
+      return new TooManyRequests("OWM onecall daily limit reached");
+    }
+
   }
   // END: Call counters and limiters
 
@@ -188,7 +259,13 @@ export class Service {
         searchParams: queryParams as unknown as Record<string, string | number | boolean>
       });
 
-      this.incrementCallCounters(); // Increment call counter late, avoid counting if an error was thrown.
+      // Increment call counter late, avoid counting if an error was thrown.
+      if(endpoint === "onecall") {
+        this.incrementOnecallCallCounters(); 
+      } else {
+        this.incrementCallCounters();
+      }
+
       if (queryParams.mode === "json") {
         return JSON.parse(result.body);
       } else {
