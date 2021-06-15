@@ -44,6 +44,43 @@ app.use("/weather", new Service({
 - `mode` (*optional*, default: `'json'`) - the results format (possible: `'json'`, `'xml'`, `'html'`)
 - `lang` (*optional*, default: `'en'`) - the language of the result. [info](https://openweathermap.org/current#multi)
 - `units` (*optional*, default: `'standard'`) - Units of measurement. `'standard'`, `'metric'` and `'imperial'` units are available.
+- `limits` (*optional*, default: See below `limits` object)
+- `plan` (*optional*, default: Plan.Free)
+- `plan_throttle` (*optional*, default: true), calculate limits based on the maximum number of monthly requests.
+
+
+
+### Call counter and limiter
+
+#### Plans
+The the plan option to one of the following:
+| Type of call  | Plan.Free | Plan.Startup | Plan.Developer | Plan.Pro | Plan.Enterprise |
+|--|------|---------|-----------|-----|------------|
+| Weather API - Minute | 60 | 600 | 3,000 | 30,000 | 200,000 |
+| Weather API - Month | 1,000,000 | 10,000,000 | 100,000,000 | 1,000,000,000 | 5,000,000,000 |
+| One Call API - Minute | 1,000/day | 2,000/day | 3,000 | 30,000 | 200,000 |
+| One Call API - Month | 30,000 | 60,000 | 100,000,000 | 1,000,000,000 | 5,000,000,000 |
+
+Define the plan you have with `options.plan`. Default is Plan.Free.
+
+#### Throttle
+Using OWM values, we can do 60 calls per minutes, up to a million per month. This means we could use all our available calls in 15 days or so when calling OWM non-stop. When throttle is enabled, the limits are calculated based on the monthly maximum calls, divided by 30 days and they by hours and minutes.
+
+On the Free plan this mean we can make 1388 calls per hour and 23 calls per minutes (1,000,000 / 30 days / 24 hours / 60 minutes). when the limit is reached we do not send the request to OWM and return a `TooManyRequests` error.
+
+For the Onecall API, there is no minute limiter for now, as the free plan allow for less than 1 request per minute. Hour limits are calculated 
+
+#### Custom limits
+```
+limits: {
+  minute: 0,
+  hour: 0,
+  day: 0,
+  onecall_hour: 0,
+  onecall_day: 0
+},
+```
+
 - `call_minute` (*optional*, default: `60`) - Maximum number of request per minute (free plan). Set to 0 to disable.
 - `call_hour` (*optional*, default: `3600`) - Maximum number of request per hour (free plan). Set to 0 to disable.
 - `call_day` (*optional*, default: `35714`) - Maximum number of request per 24h, current default is 1,000,000 api call per month divided by 28 days (free plan).  Set to 0 to disable.
