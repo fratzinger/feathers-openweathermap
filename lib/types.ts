@@ -8,15 +8,25 @@ export interface OWMServiceOptions {
   lang: Lang
   mode: Mode
   units: Unit,
-  limit_minute: number,
-  limit_hour: number,
-  limit_day: number
-}
+  plan: Plan,
+  limits: CallCounterLimits,
+  plan_throttle: boolean
 
-export interface CallCounter {
+}
+export enum Plan {
+	"Free",
+	"Startup",
+	"Developer",
+	"Pro",
+	"Enterprise"
+}
+export interface CallCounterLimits {
 	minute: number,
 	hour: number,
 	day: number,
+	onecall_minute: number,
+	onecall_hour: number,
+	onecall_day: number,
 }
 
 export interface WithAppId {
