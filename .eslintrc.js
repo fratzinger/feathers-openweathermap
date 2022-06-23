@@ -6,12 +6,10 @@ module.exports = {
   },
   parser: "@typescript-eslint/parser",
   plugins: [
-    "security",
     "@typescript-eslint"
   ],
   extends: [
     "eslint:recommended",
-    "plugin:security/recommended",
     "plugin:@typescript-eslint/recommended"
   ],
   rules: {
@@ -30,7 +28,6 @@ module.exports = {
     }, {
       "enforceForRenamedProperties": false
     }],
-    "security/detect-object-injection": "off",
     "object-curly-spacing": ["warn", "always"],
     "prefer-const": ["warn"]
   },
