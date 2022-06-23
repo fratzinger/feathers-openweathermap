@@ -42,7 +42,7 @@
     "@feathersjs/adapter-commons": "^4.5.15",
     "@feathersjs/errors": "^4.5.15",
     "feathers-hooks-common": "^6.1.3",
-    "got": "^12.1.0"
+    "got": "^11.8.5"
   },
   "devDependencies": {
     "@feathersjs/feathers": "^4.5.15",
