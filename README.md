@@ -1,578 +1,143 @@
 # feathers-openweathermap
 
 ![npm](https://img.shields.io/npm/v/feathers-openweathermap)
-![GitHub Workflow Status](https://img.shields.io/github/workflow/status/fratzinger/feathers-openweathermap/Node.js%20CI)
-![Code Climate maintainability](https://img.shields.io/codeclimate/maintainability/fratzinger/feathers-openweathermap)
-![Code Climate coverage](https://img.shields.io/codeclimate/coverage/fratzinger/feathers-openweathermap)
-![David](https://img.shields.io/david/fratzinger/feathers-openweathermap)
 ![npm](https://img.shields.io/npm/dm/feathers-openweathermap)
-[![GitHub license](https://img.shields.io/github/license/fratzinger/feathers-openweathermap)](https://github.com/fratzinger/feathers-openweathermap/blob/master/LICENSE)
+[![GitHub license](https://img.shields.io/github/license/fratzinger/feathers-openweathermap)](https://github.com/fratzinger/feathers-openweathermap/blob/main/LICENSE)
 
-> Ever needed weather information in your [feathers.js](www.feathersjs.com) app? No matter if historical, current or forecast data. This is thin layer around the [OpenWeatherMap API](https://openweathermap.org/api) wrapped in a `feathers.js` service. 
+> An [OpenWeatherMap API](https://openweathermap.org/api) service for [Feathers 5](https://feathersjs.com) applications. Supports current weather, forecasts, one call, and air pollution data.
 
 ## Supported APIs
-- [Current weather](https://openweathermap.org/current) (*free*)
-- [Onecall](https://openweathermap.org/api/one-call-api) (*free*)
-- [Forecast](https://openweathermap.org/forecast5) (*free*)
-- [Hourly forecast](https://openweathermap.org/api/hourly-forecast) (*Included in the Developer, Professional and Enterprise subscription plans*)
-- [Daily forecast](https://openweathermap.org/forecast16) (*Included in all paid subscription plans*)
-- [Climatic forecast](https://openweathermap.org/api/forecast30) (*Included in the Developer, Professional and Enterprise subscription plans*)
-- [Air pollution](https://openweathermap.org/api/air-pollution) (*free*)
+- [Current weather](https://openweathermap.org/current) (*free*) - `WeatherService`
+- [One Call 3.0](https://openweathermap.org/api/one-call-3) (*free tier: 1,000 calls/day*) - `OneCallService`
+- [5 Day / 3 Hour Forecast](https://openweathermap.org/forecast5) (*free*) - `ForecastService`
+- [Hourly forecast](https://openweathermap.org/api/hourly-forecast) (*paid*) - `HourlyForecastService`
+- [Daily forecast](https://openweathermap.org/forecast16) (*paid*) - `DailyForecastService`
+- [Climatic forecast](https://openweathermap.org/api/forecast30) (*paid*) - `ClimaticForecastService`
+- [Air pollution](https://openweathermap.org/api/air-pollution) (*free*) - `AirPollutionService`
 
 ## Installation
 
 ```bash
-npm install feathers-openweathermap
+pnpm add feathers-openweathermap
 ```
 
 ## Get your appid
 Follow the instructions at: https://openweathermap.org/appid
 
-## Creating a service
+## Setup
 
-```js
-const { Service } = require('feathers-openweathermap');
+Each API endpoint has its own dedicated service. Register only the ones you need:
 
-app.use("/weather", new Service({
-  appid: "YOUR_APP_ID",
-}))
+```ts
+import {
+  WeatherService,
+  OneCallService,
+  ForecastService,
+  AirPollutionService,
+} from 'feathers-openweathermap'
+
+const options = { appid: 'YOUR_APP_ID' }
+
+app.use('openweathermap/weather', new WeatherService(options))
+app.use('openweathermap/onecall', new OneCallService(options))
+app.use('openweathermap/forecast', new ForecastService(options))
+app.use('openweathermap/air-pollution', new AirPollutionService(options))
 ```
 
 ### Service options
 - `appid` (**required**) - your appid from [openweathermap.org](https://openweathermap.org/guide)
-- `v` (*optional*, default: `'2.5'`) - the version of openweathermap
-- `mode` (*optional*, default: `'json'`) - the results format (possible: `'json'`, `'xml'`, `'html'`)
+- `v` (*optional*, default: `'3.0'`) - the API version
+- `mode` (*optional*, default: `'json'`) - the results format (`'json'`, `'xml'`, `'html'`)
 - `lang` (*optional*, default: `'en'`) - the language of the result. [info](https://openweathermap.org/current#multi)
 - `units` (*optional*, default: `'standard'`) - Units of measurement. `'standard'`, `'metric'` and `'imperial'` units are available.
 
-## Methods
+## Services
 
-The service exposes two standard methods, `find(params)` and `create(data, params)` and custom methods for `@feathersjs/feathers@5`. These methods are functionally equivalent. The `create()` method is added so that you can take advantage of the `.on('created')` service event.
+Each service exposes `find(params)` and `create(data)`. They are functionally equivalent. `create()` is useful for taking advantage of the `.on('created')` service event.
 
-When using the `find(params)` method, include the query as the params to be passed to the underlying OpenWeatherMap method.
+### WeatherService
 
-### `find(params)`
+```ts
+// find with query
+app.service('openweathermap/weather').find({
+  query: { cityName: 'Munich', stateCode: 'DE' },
+})
 
-#### [Current weather](https://openweathermap.org/current)
-```js
-// by city name https://openweathermap.org/current#name
-app.service('weather').find({ 
-  query: { 
-    endpoint: 'weather', 
-    cityName: "Munich", 
-    stateCode: "DE"
-  }
-});
-
-// by city id https://openweathermap.org/current#cityid
-app.service('weather').find({ 
-  query: { 
-    endpoint: 'weather', 
-    cityId: 2844588 
-  } 
-});
-
-// by geo coordinates https://openweathermap.org/current#geo
-app.service('weather').find({ 
-  query: { 
-    endpoint: 'weather', 
-    lat: 52.520008
-    lon: 13.404954
-  } 
-});
-
-// by zip code https://openweathermap.org/current#zip
-app.service('weather').find({ 
-  query: { 
-    endpoint: 'weather', 
-    zipCode: "18057", 
-    countryCode: "DE"
-  } 
-});
+// or create with data
+app.service('openweathermap/weather').create({ cityId: 2844588 })
 ```
 
-#### [Onecall](https://openweathermap.org/api/one-call-api)
-```js
-app.service('weather').find({ 
-  query: { 
-    endpoint: 'onecall', 
-    lat: 52.520008, 
-    lon: 13.404954
-  } 
-});
-```
+### OneCallService
 
-#### [Forecast](https://openweathermap.org/forecast5)
-
-```js
-// by city name https://openweathermap.org/forecast5#name5
-app.service('weather').find({ 
-  query: { 
-    endpoint: 'forecast', 
-    cityName: "Munich", 
-    stateCode: "DE"
-  }
-});
-
-// by city id https://openweathermap.org/forecast5#cityid5
-app.service('weather').find({ 
-  query: { 
-    endpoint: 'forecast', 
-    cityId: 2844588 
-  } 
-});
-
-// by geo coordinates https://openweathermap.org/forecast5#geo5
-app.service('weather').find({ 
-  query: { 
-    endpoint: 'forecast', 
-    lat: 52.520008,
-    lon: 13.404954
-  } 
-});
-
-// by zip code https://openweathermap.org/forecast5#zip
-app.service('weather').find({ 
-  query: { 
-    endpoint: 'forecast', 
-    zipCode: "18057", 
-    countryCode: "DE"
-  } 
-});
-```
-
-#### [Hourly forecast](https://openweathermap.org/api/hourly-forecast)
-
-```js
-// by city name https://openweathermap.org/api/hourly-forecast#name5
-app.service('weather').find({ 
-  query: { 
-    endpoint: 'forecast/hourly', 
-    cityName: "Munich", 
-    stateCode: "DE"
-  }
-});
-
-// by city id https://openweathermap.org/api/hourly-forecast#cityid5
-app.service('weather').find({ 
-  query: { 
-    endpoint: 'forecast/hourly', 
-    cityId: 2844588 
-  } 
-});
-
-// by geo coordinates https://openweathermap.org/api/hourly-forecast#geo5
-app.service('weather').find({ 
-  query: { 
-    endpoint: 'forecast/hourly', 
-    lat: 52.520008,
-    lon: 13.404954
-  } 
-});
-
-// by zip code https://openweathermap.org/api/hourly-forecast#zip
-app.service('weather').find({ 
-  query: { 
-    endpoint: 'forecast/hourly', 
-    zipCode: "18057", 
-    countryCode: "DE"
-  } 
-});
-```
-
-#### [Daily forecast](https://openweathermap.org/forecast16)
-```js
-// by city name https://openweathermap.org/forecast16#name16
-app.service('weather').find({ 
-  query: { 
-    endpoint: 'forecast/daily', 
-    cityName: "Munich", 
-    stateCode: "DE"
-  }
-});
-
-// by city id https://openweathermap.org/forecast16#cityid16
-app.service('weather').find({ 
-  query: { 
-    endpoint: 'forecast/daily', 
-    cityId: 2844588 
-  } 
-});
-
-// by geo coordinates https://openweathermap.org/forecast16#geo16
-app.service('weather').find({ 
-  query: { 
-    endpoint: 'forecast/daily', 
-    lat: 52.520008,
-    lon: 13.404954
-  } 
-});
-
-// by zip code https://openweathermap.org/forecast16#zip
-app.service('weather').find({ 
-  query: { 
-    endpoint: 'forecast/daily', 
-    zipCode: "18057", 
-    countryCode: "DE"
-  } 
-});
-```
-
-#### [Climatic forecast](https://openweathermap.org/api/forecast30)
-
-```js
-// by city name https://openweathermap.org/api/forecast30#name-year
-app.service('weather').find({ 
-  query: { 
-    endpoint: 'forecast/climatic', 
-    cityName: "Munich", 
-    stateCode: "DE"
-  }
-});
-
-// by city id https://openweathermap.org/api/forecast30#cityid-year
-app.service('weather').find({ 
-  query: { 
-    endpoint: 'forecast/climatic', 
-    cityId: 2844588 
-  } 
-});
-
-// by geo coordinates https://openweathermap.org/api/forecast30#geo-year
-app.service('weather').find({ 
-  query: { 
-    endpoint: 'forecast/climatic', 
-    lat: 52.520008,
-    lon: 13.404954
-  } 
-});
-
-// by zip code https://openweathermap.org/api/forecast30#zip-year
-app.service('weather').find({ 
-  query: { 
-    endpoint: 'forecast/climatic', 
-    zipCode: "18057", 
-    countryCode: "DE"
-  } 
-});
-```
-
-#### [Air pollution](https://openweathermap.org/api/air-pollution)
-
-```js
-// current air pollution https://openweathermap.org/api/air-pollution#current
-app.service('weather').find({ 
-  query: { 
-    endpoint: "air_pollution", 
-    lat: 52.520008, 
-    lon: 13.404954 
-  } 
-});
-
-// forecast air pollution https://openweathermap.org/api/air-pollution#current
-app.service('weather').find({ 
-  query: { 
-    endpoint: "air_pollution/forecast", 
-    lat: 52.520008, 
-    lon: 13.404954 
-  } 
-});
-
-// historical air pollution https://openweathermap.org/api/air-pollution#history
-app.service('weather').find({ 
-  query: { 
-    endpoint: "air_pollution/history", 
-    start: 1606223802, 
-    end: 1606482999, 
-    lat: 52.520008, 
-    lon: 13.404954
-  } 
-});
-```
-
-### `create(data)`
-
-#### [Current weather](https://openweathermap.org/current)
-```js
-// by city name https://openweathermap.org/current#name
-app.service('weather').create({ 
-  endpoint: 'weather', 
-  cityName: "Munich", 
-  stateCode: "DE"
-});
-
-// by city id https://openweathermap.org/current#cityid
-app.service('weather').create({ 
-  endpoint: 'weather',
-  cityId: 2844588
-});
-
-// by geo coordinates https://openweathermap.org/current#geo
-app.service('weather').create({ 
-  endpoint: 'weather', 
-  lat: 52.520008,
-  lon: 13.404954
-});
-
-// by zip code https://openweathermap.org/current#zip
-app.service('weather').create({ 
-  endpoint: 'weather', 
-  zipCode: "18057", 
-  countryCode: "DE"
-});
-```
-
-#### [Onecall](https://openweathermap.org/api/one-call-api)
-```js
-app.service('weather').create({ 
-  endpoint: 'onecall', 
-  lat: 52.520008, 
-  lon: 13.404954
-});
-```
-
-#### [Forecast](https://openweathermap.org/forecast5)
-
-```js
-// by city name https://openweathermap.org/forecast5#name5
-app.service('weather').create({ 
-  endpoint: 'forecast', 
-  cityName: "Munich", 
-  stateCode: "DE"
-});
-
-// by city id https://openweathermap.org/forecast5#cityid5
-app.service('weather').create({ 
-  endpoint: 'forecast', 
-  cityId: 2844588 
-});
-
-// by geo coordinates https://openweathermap.org/forecast5#geo5
-app.service('weather').create({ 
-  endpoint: 'forecast', 
-  lat: 52.520008,
-  lon: 13.404954 
-});
-
-// by zip code https://openweathermap.org/forecast5#zip
-app.service('weather').create({ 
-  endpoint: 'forecast', 
-  zipCode: "18057", 
-  countryCode: "DE" 
-});
-```
-
-#### [Hourly forecast](https://openweathermap.org/api/hourly-forecast)
-
-```js
-// by city name https://openweathermap.org/api/hourly-forecast#name5
-app.service('weather').create({ 
-  endpoint: 'forecast/hourly', 
-  cityName: "Munich", 
-  stateCode: "DE"
-});
-
-// by city id https://openweathermap.org/api/hourly-forecast#cityid5
-app.service('weather').create({ 
-  endpoint: 'forecast/hourly', 
-  cityId: 2844588  
-});
-
-// by geo coordinates https://openweathermap.org/api/hourly-forecast#geo5
-app.service('weather').create({ 
-  endpoint: 'forecast/hourly', 
-  lat: 52.520008,
-  lon: 13.404954 
-});
-
-// by zip code https://openweathermap.org/api/hourly-forecast#zip
-app.service('weather').create({ 
-  endpoint: 'forecast/hourly', 
-  zipCode: "18057", 
-  countryCode: "DE" 
-});
-```
-
-#### [Daily forecast](https://openweathermap.org/forecast16)
-```js
-// by city name https://openweathermap.org/forecast16#name16
-app.service('weather').create({ 
-  endpoint: 'forecast/daily', 
-  cityName: "Munich", 
-  stateCode: "DE"
-});
-
-// by city id https://openweathermap.org/forecast16#cityid16
-app.service('weather').create({ 
-  endpoint: 'forecast/daily', 
-  cityId: 2844588 
-});
-
-// by geo coordinates https://openweathermap.org/forecast16#geo16
-app.service('weather').create({ 
-  endpoint: 'forecast/daily', 
-  lat: 52.520008,
-  lon: 13.404954 
-});
-
-// by zip code https://openweathermap.org/forecast16#zip
-app.service('weather').create({ 
-  endpoint: 'forecast/daily', 
-  zipCode: "18057", 
-  countryCode: "DE" 
-});
-```
-
-#### [Climatic forecast](https://openweathermap.org/api/forecast30)
-
-```js
-// by city name https://openweathermap.org/api/forecast30#name-year
-app.service('weather').create({ 
-  endpoint: 'forecast/climatic', 
-  cityName: "Munich", 
-  stateCode: "DE"
-});
-
-// by city id https://openweathermap.org/api/forecast30#cityid-year
-app.service('weather').create({ 
-  endpoint: 'forecast/climatic', 
-  cityId: 2844588 
-});
-
-// by geo coordinates https://openweathermap.org/api/forecast30#geo-year
-app.service('weather').create({ 
-  endpoint: 'forecast/climatic', 
-  lat: 52.520008
-  lon: 13.404954 
-});
-
-// by zip code https://openweathermap.org/api/forecast30#zip-year
-app.service('weather').create({ 
-  endpoint: 'forecast/climatic', 
-  zipCode: "18057", 
-  countryCode: "DE" 
-});
-```
-
-#### [Air pollution](https://openweathermap.org/api/air-pollution)
-
-```js
-// current air pollution https://openweathermap.org/api/air-pollution#current
-app.service('weather').create({ 
-  endpoint: "air_pollution",
-  lat: 52.520008,
-  lon: 13.404954
-});
-
-// forecast air pollution https://openweathermap.org/api/air-pollution#current
-app.service('weather').create({ 
-  endpoint: "air_pollution/forecast",
-  lat: 52.520008,
-  lon: 13.404954
-});
-
-// historical air pollution https://openweathermap.org/api/air-pollution#history
-app.service('weather').create({
-    endpoint: "air_pollution/history",
-    start: 1606223802,
-    end: 1606482999,
-    lat: 52.520008,
-    lon: 13.404954
-});
-```
-
-### `currentWeatherData(data)`
-
-```js
-app.service('weather').currentWeatherData({ 
-  cityId: 2844588
-});
-```
-
-### `oneCall(data)`
-
-```js
-app.service('weather').oneCall({
-  lat: 52.520008,
-  lon: 13.404954
-});
-```
-
-### `fiveDay3HourForecast(data)`
-
-```js
-app.service('weather').fiveDay3HourForecast({
-  cityName: "Munich", 
-  stateCode: "DE", 
-  countryCode: "DE"
+```ts
+app.service('openweathermap/onecall').find({
+  query: { lat: 52.520008, lon: 13.404954 },
 })
 ```
 
-### `hourlyForecast4Days(data)`
+### ForecastService
 
-```js
-app.service('weather').hourlyForecast4Days({
-  cityName: "Munich", 
-  stateCode: "DE", 
-  countryCode: "DE"
+```ts
+app.service('openweathermap/forecast').find({
+  query: { cityName: 'Munich', stateCode: 'DE' },
 })
 ```
 
-### `dailyForecast16Days(data)`
+### HourlyForecastService / DailyForecastService / ClimaticForecastService
 
-```js
-app.service('weather').dailyForecast16Days({
-  cityName: "Munich", 
-  stateCode: "DE", 
-  countryCode: "DE"
+```ts
+import { HourlyForecastService, DailyForecastService, ClimaticForecastService } from 'feathers-openweathermap'
+
+app.use('openweathermap/forecast-hourly', new HourlyForecastService(options))
+app.use('openweathermap/forecast-daily', new DailyForecastService(options))
+app.use('openweathermap/forecast-climate', new ClimaticForecastService(options))
+```
+
+### AirPollutionService
+
+`find()` and `create()` return current air pollution. Additional methods `forecast()` and `historical()` are available:
+
+```ts
+// current
+app.service('openweathermap/air-pollution').find({
+  query: { lat: 52.520008, lon: 13.404954 },
 })
-```
 
-### `climaticForecast30Days(data)`
-
-```js
-app.service('weather').climaticForecast30Days({
-  cityName: "Munich", 
-  stateCode: "DE", 
-  countryCode: "DE"
-})
-```
-
-### `airPollutionCurrent(data)`
-
-```js
-app.service('weather').airPollutionCurrent({ 
-  lat: 52.520008, 
-  lon: 13.404954 
-});
-```
-
-### `airPollutionForecast(data)`
-
-```js
-app.service('weather').airPollutionForecast({ 
-  lat: 52.520008, 
-  lon: 13.404954 
-});
-```
-
-### `airPollutionHistorical(data)`
-
-```js
-app.service('weather').airPollutionCurrent({ 
-  lat: 52.520008, 
+// forecast
+app.service('openweathermap/air-pollution').forecast({
+  lat: 52.520008,
   lon: 13.404954,
-  start: 1606223802, 
-  end: 1606482999
-});
+})
+
+// historical
+app.service('openweathermap/air-pollution').historical({
+  lat: 52.520008,
+  lon: 13.404954,
+  start: 1606223802,
+  end: 1606482999,
+})
 ```
+
+## Location query options
+
+All weather/forecast endpoints support these location methods:
+
+| Method | Parameters |
+|--------|-----------|
+| City name | `cityName`, `stateCode?`, `countryCode?` |
+| City ID | `cityId` |
+| Coordinates | `lat`, `lon` |
+| Zip code | `zipCode`, `countryCode?` |
+
+OneCall and AirPollution only support coordinates (`lat`, `lon`).
 
 ## Testing
 
-Simply run `npm test` and all your tests in the `test/` directory will be run. This project is setup with vscode. You can use the debugger with breakpoints. To run tests locally, you'll need your own `appid`. You can get it here: https://openweathermap.org/appid. Add a `.env` file with:
-```shell
-APPID = YOUR_APP_ID
+```bash
+pnpm test
 ```
+
+Tests use mocked fetch responses and run without an API key.
 
 ## License
 

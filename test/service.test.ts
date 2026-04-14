@@ -1,314 +1,465 @@
-import assert from "assert";
-import feathers, { Application } from "@feathersjs/feathers";
-import { Service } from "../lib";
+import { describe, it, expect, beforeAll, vi, beforeEach } from 'vitest'
+import {
+  WeatherService,
+  OneCallService,
+  ForecastService,
+  HourlyForecastService,
+  DailyForecastService,
+  ClimaticForecastService,
+  AirPollutionService,
+} from '../src/index.js'
 
-describe("service.test.ts", function() {
-  let app: Application, 
-    service: Service;
-  before(function() {
-    app = feathers();
-    const createdService = new Service({
-      appid: process.env.APPID
-    });
-    app.use("test", createdService);
-    service = app.service("test");
-  });
+function mockFetch(data: unknown) {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(data),
+      text: () => Promise.resolve(JSON.stringify(data)),
+    }),
+  )
+}
 
-  describe("weather - 'current weather data'", function() {
-    describe("find", async function() {
-      it("find: get current weather by city name", async function() {
-        const result = await service.find({ query: { endpoint: "weather", cityName: "Munich", stateCode: "DE" } });
-        assert.strictEqual(result.name, "Munich", "found correct city");
-      });
+function fetchUrl(): string {
+  return vi.mocked(fetch).mock.calls[0][0] as string
+}
 
-      it("find: get current weather data by city id", async function() {
-        const result = await service.find({ query: { endpoint: "weather", cityId: 2844588 } });
-        assert.strictEqual(result.name, "Rostock", "found correct city");
-      });
-    });
+beforeEach(() => {
+  vi.restoreAllMocks()
+})
 
-    describe("create", async function() {
-      it("create: get current weather by city name", async function() {
-        const result = await service.create({ endpoint: "weather", cityName: "Munich", stateCode: "DE" });
-        assert.strictEqual(result.name, "Munich", "found correct city");
-      });
+describe('WeatherService', () => {
+  let service: WeatherService
 
-      it("create: get current weather data by city id", async function() {
-        const result = await service.create({ endpoint: "weather", cityId: 2844588 });
-        assert.strictEqual(result.name, "Rostock", "found correct city");
-      });
-    });
+  beforeAll(() => {
+    service = new WeatherService({ appid: 'test-key' })
+  })
 
-    describe("custom method", function() {
-      it("custom: get current weather by city name", async function() {
-        const result = await service.currentWeatherData({ cityName: "Munich", stateCode: "DE", countryCode: "DE" });
-        assert.strictEqual(result.name, "Munich", "found correct city");
-      });
-  
-      it("custom: get current weather data by city id", async function() {
-        const result = await service.currentWeatherData({ cityId: 2844588 });
-        assert.strictEqual(result.name, "Rostock", "found correct city");
-      });
-  
-      it("custom: get current weather by geo coordinates", async function() {
-        const result = await service.currentWeatherData({ lat: 52.520008, lon: 13.404954 });
-        assert.strictEqual(result.name, "Mitte", "found correct 'city'");
-      });
-  
-      it("custom: get current weather by zip code", async function() {
-        const result = await service.currentWeatherData({ zipCode: "18057", countryCode: "DE" });
-        assert.strictEqual(result.name, "Rostock", "found correct city");
-      });
-    });
-  });
+  const response = {
+    base: 'stations',
+    clouds: { all: 75 },
+    cod: 200,
+    coord: { lon: 11.58, lat: 48.14 },
+    dt: 1625000000,
+    id: 2867714,
+    main: {
+      temp: 293.15,
+      feels_like: 292.5,
+      temp_min: 291.15,
+      temp_max: 295.15,
+      pressure: 1013,
+      humidity: 65,
+    },
+    name: 'Munich',
+    sys: {
+      type: 1,
+      id: 1267,
+      message: 0,
+      country: 'DE',
+      sunrise: 1624935000,
+      sunset: 1624993000,
+    },
+    timezone: 7200,
+    visibility: 10000,
+    weather: [
+      { id: 803, main: 'Clouds', description: 'broken clouds', icon: '04d' },
+    ],
+    wind: { deg: 220, speed: 3.6 },
+  }
 
-  describe("onecall", function() {
-    describe("find", function() {
-      it("find: get onecall by geo coordinates", async function() {
-        const result = await service.find({ query: { endpoint: "onecall", lat: 52.520008, lon: 13.404954 } });
-        assert.ok(result.current, "has current");
-        assert.ok(result.daily, "has daily");
-        assert.ok(result.hourly, "has hourly");
-        assert.ok(result.minutely, "has minutely");
-      });
-    });
+  it('find by city name', async () => {
+    mockFetch(response)
+    const result = await service.find({
+      query: { cityName: 'Munich', stateCode: 'DE' },
+    })
+    expect(result.name).toBe('Munich')
+    expect(fetchUrl()).toContain('/3.0/weather')
+    expect(fetchUrl()).toContain('q=Munich%2CDE')
+  })
 
-    describe("create", function() {
-      it("create: get onecall by geo coordinates", async function() {
-        const result = await service.create({ endpoint: "onecall", lat: 52.520008, lon: 13.404954 });
-        assert.ok(result.current, "has current");
-        assert.ok(result.daily, "has daily");
-        assert.ok(result.hourly, "has hourly");
-        assert.ok(result.minutely, "has minutely");
-      });
-    });
+  it('find by city id', async () => {
+    mockFetch({ ...response, name: 'Rostock' })
+    const result = await service.find({ query: { cityId: 2844588 } })
+    expect(result.name).toBe('Rostock')
+    expect(fetchUrl()).toContain('id=2844588')
+  })
 
-    describe("custom method", function() {
-      it("custom: get onecall by geo coordinates", async function() {
-        const result = await service.oneCall({ lat: 52.520008, lon: 13.404954 });
-        assert.ok(result.current, "has current");
-        assert.ok(result.daily, "has daily");
-        assert.ok(result.hourly, "has hourly");
-        assert.ok(result.minutely, "has minutely");
-      });
-    });
-  });
+  it('create by city name', async () => {
+    mockFetch(response)
+    const result = await service.create({
+      cityName: 'Munich',
+      stateCode: 'DE',
+    })
+    expect(result.name).toBe('Munich')
+  })
 
-  describe("forecast - '5 Day / 3 Hour Forecast'", function() {
-    describe("find", async function() {
-      it("find: get forecast by city name", async function() {
-        const result = await service.find({ query: { endpoint: "forecast", cityName: "Munich", stateCode: "DE" } });
-        assert.strictEqual(result.city.name, "Munich", "found correct city");
-      });
+  it('find by geo coordinates', async () => {
+    mockFetch({ ...response, name: 'Mitte' })
+    const result = await service.find({
+      query: { lat: 52.520008, lon: 13.404954 },
+    })
+    expect(result.name).toBe('Mitte')
+    expect(fetchUrl()).toContain('lat=52.520008')
+    expect(fetchUrl()).toContain('lon=13.404954')
+  })
 
-      it("find: get forecast data by city id", async function() {
-        const result = await service.find({ query: { endpoint: "forecast", cityId: 2844588 } });
-        assert.strictEqual(result.city.name, "Rostock", "found correct city");
-      });
-    });
+  it('find by zip code', async () => {
+    mockFetch({ ...response, name: 'Rostock' })
+    const result = await service.find({
+      query: { zipCode: '18057', countryCode: 'DE' },
+    })
+    expect(result.name).toBe('Rostock')
+    expect(fetchUrl()).toContain('zip=18057%2CDE')
+  })
+})
 
-    describe("create", async function() {
-      it("create: get forecast by city name", async function() {
-        const result = await service.create({ endpoint: "forecast", cityName: "Munich", stateCode: "DE" });
-        assert.strictEqual(result.city.name, "Munich", "found correct city");
-      });
+describe('OneCallService', () => {
+  let service: OneCallService
 
-      it("create: get forecast data by city id", async function() {
-        const result = await service.create({ endpoint: "forecast", cityId: 2844588 });
-        assert.strictEqual(result.city.name, "Rostock", "found correct city");
-      });
-    });
+  beforeAll(() => {
+    service = new OneCallService({ appid: 'test-key' })
+  })
 
-    describe("custom method", function() {
-      it("custom: get forecast by city name", async function() {
-        const result = await service.fiveDay3HourForecast({ cityName: "Munich", stateCode: "DE", countryCode: "DE" });
-        assert.strictEqual(result.city.name, "Munich", "found correct city");
-      });
-  
-      it("custom: get forecast data by city id", async function() {
-        const result = await service.fiveDay3HourForecast({ cityId: 2844588 });
-        assert.strictEqual(result.city.name, "Rostock", "found correct city");
-      });
-  
-      it("custom: get forecast by geo coordinates", async function() {
-        const result = await service.fiveDay3HourForecast({ lat: 52.520008, lon: 13.404954 });
-        assert.strictEqual(result.city.name, "Mitte", "found correct 'city'");
-      });
-  
-      it("custom: get forecast by zip code", async function() {
-        const result = await service.fiveDay3HourForecast({ zipCode: "18057", countryCode: "DE" });
-        assert.strictEqual(result.city.name, "Rostock", "found correct city");
-      });
-    });
-  });
+  const response = {
+    lat: 52.52,
+    lon: 13.405,
+    timezone: 'Europe/Berlin',
+    timezone_offset: 7200,
+    current: {
+      dt: 1625000000,
+      temp: 293.15,
+      feels_like: 292.5,
+      pressure: 1013,
+      humidity: 65,
+      dew_point: 286.15,
+      uvi: 5.2,
+      clouds: 75,
+      visibility: 10000,
+      wind_speed: 3.6,
+      wind_deg: 220,
+      sunrise: 1624935000,
+      sunset: 1624993000,
+      weather: [
+        {
+          id: 803,
+          main: 'Clouds',
+          description: 'broken clouds',
+          icon: '04d',
+        },
+      ],
+    },
+    daily: [{ dt: 1625000000 }],
+    hourly: [{ dt: 1625000000 }],
+    minutely: [{ dt: 1625000000, precipitation: 0 }],
+  }
 
-  // not included in free subscription
-  describe.skip("forecast/hourly - 'hourlyForecast4Days'", function() {
-    describe("find", async function() {
-      it("find: get hourly forecast by city name", async function() {
-        const result = await service.find({ query: { endpoint: "forecast/hourly", cityName: "Munich", stateCode: "DE" } });
-        assert.strictEqual(result.city.name, "Munich", "found correct city");
-      });
+  it('find by geo coordinates', async () => {
+    mockFetch(response)
+    const result = await service.find({
+      query: { lat: 52.520008, lon: 13.404954 },
+    })
+    expect(result.current).toBeTruthy()
+    expect(result.daily).toBeTruthy()
+    expect(result.hourly).toBeTruthy()
+    expect(result.minutely).toBeTruthy()
+    expect(fetchUrl()).toContain('/3.0/onecall')
+  })
 
-      it("find: get hourly forecast data by city id", async function() {
-        const result = await service.find({ query: { endpoint: "forecast/hourly", cityId: 2844588 } });
-        assert.strictEqual(result.city.name, "Rostock", "found correct city");
-      });
-    });
+  it('create by geo coordinates', async () => {
+    mockFetch(response)
+    const result = await service.create({ lat: 52.520008, lon: 13.404954 })
+    expect(result.current).toBeTruthy()
+  })
+})
 
-    describe("create", async function() {
-      it("create: get hourly forecast by city name", async function() {
-        const result = await service.create({ endpoint: "forecast/hourly", cityName: "Munich", stateCode: "DE" });
-        assert.strictEqual(result.city.name, "Munich", "found correct city");
-      });
+describe('ForecastService', () => {
+  let service: ForecastService
 
-      it("create: get hourly forecast data by city id", async function() {
-        const result = await service.create({ endpoint: "forecast/hourly", cityId: 2844588 });
-        assert.strictEqual(result.city.name, "Rostock", "found correct city");
-      });
-    });
+  beforeAll(() => {
+    service = new ForecastService({ appid: 'test-key' })
+  })
 
-    describe("custom method", function() {
-      it("get hourly forecast by city name", async function() {
-        const result = await service.hourlyForecast4Days({ cityName: "Munich", stateCode: "DE", countryCode: "DE" });
-        assert.strictEqual(result.city.name, "Munich", "found correct city");
-      });
-  
-      it("get hourly forecast data by city id", async function() {
-        const result = await service.hourlyForecast4Days({ cityId: 2844588 });
-        assert.strictEqual(result.city.name, "Rostock", "found correct city");
-      });
-  
-      it("get hourly forecast by geo coordinates", async function() {
-        const result = await service.hourlyForecast4Days({ lat: 52.520008, lon: 13.404954 });
-        assert.strictEqual(result.city.name, "Mitte", "found correct 'city'");
-      });
-  
-      it("get hourly forecast by zip code", async function() {
-        const result = await service.hourlyForecast4Days({ zipCode: "18057", countryCode: "DE" });
-        assert.strictEqual(result.city.name, "Rostock", "found correct city");
-      });
-    });
-  });
+  const response = {
+    cod: 200,
+    message: 0,
+    cnt: 40,
+    list: [
+      {
+        dt: 1625000000,
+        main: {
+          temp: 293.15,
+          feels_like: 292.5,
+          temp_min: 291.15,
+          temp_max: 295.15,
+          pressure: 1013,
+          sea_level: 1013,
+          grnd_level: 1010,
+          humidity: 65,
+        },
+        weather: [
+          {
+            id: 803,
+            main: 'Clouds',
+            description: 'broken clouds',
+            icon: '04d',
+          },
+        ],
+        clouds: { all: 75 },
+        wind: { speed: 3.6, deg: 220, gust: 5.0 },
+        visibility: 10000,
+        pop: 0.2,
+        sys: { pod: 'd' },
+        dt_txt: '2021-06-30 12:00:00',
+      },
+    ],
+    city: {
+      id: 2867714,
+      name: 'Munich',
+      coord: { lat: 48.14, lon: 11.58 },
+      country: 'DE',
+      timezone: 7200,
+      sunrise: 1624935000,
+      sunset: 1624993000,
+    },
+  }
 
-  // not included in free subscription
-  describe.skip("forecast/daily - 'dailyForecast16Days'", function() {
-    it("get daily forecast by city name", async function() {
-      const result = await service.dailyForecast16Days({ cityName: "Munich", stateCode: "DE", countryCode: "DE" });
-      
-      assert.strictEqual(result.city.name, "Munich", "found correct city");
-    });
+  it('find by city name', async () => {
+    mockFetch(response)
+    const result = await service.find({
+      query: { cityName: 'Munich', stateCode: 'DE' },
+    })
+    expect(result.city.name).toBe('Munich')
+    expect(fetchUrl()).toContain('/3.0/forecast')
+  })
 
-    it("get daily forecast data by city id", async function() {
-      const result = await service.dailyForecast16Days({ cityId: 2844588 });
-      
-      assert.strictEqual(result.city.name, "Rostock", "found correct city");
-    });
+  it('find by city id', async () => {
+    mockFetch({
+      ...response,
+      city: { ...response.city, name: 'Rostock' },
+    })
+    const result = await service.find({ query: { cityId: 2844588 } })
+    expect(result.city.name).toBe('Rostock')
+  })
 
-    it("get daily forecast by geo coordinates", async function() {
-      const result = await service.dailyForecast16Days({ lat: 52.520008, lon: 13.404954 });
-      
-      assert.strictEqual(result.city.name, "Mitte", "found correct 'city'");
-    });
+  it('create by city name', async () => {
+    mockFetch(response)
+    const result = await service.create({
+      cityName: 'Munich',
+      stateCode: 'DE',
+    })
+    expect(result.city.name).toBe('Munich')
+  })
 
-    it("get daily forecast by zip code", async function() {
-      const result = await service.dailyForecast16Days({ zipCode: "18057", countryCode: "DE" });
-      
-      assert.strictEqual(result.city.name, "Rostock", "found correct city");
-    });
-  });
+  it('find by geo coordinates', async () => {
+    mockFetch({
+      ...response,
+      city: { ...response.city, name: 'Mitte' },
+    })
+    const result = await service.find({
+      query: { lat: 52.520008, lon: 13.404954 },
+    })
+    expect(result.city.name).toBe('Mitte')
+  })
 
-  // not included in free subscription
-  describe.skip("forecast/climate - 'Climate forecast for 30 days'", function() {
-    it("get climatic forecast by city name", async function() {
-      const result = await service.climaticForecast30Days({ cityName: "Munich", stateCode: "DE", countryCode: "DE" });
-      assert.strictEqual(result.city.name, "Munich", "found correct city");
-    });
+  it('find by zip code', async () => {
+    mockFetch({
+      ...response,
+      city: { ...response.city, name: 'Rostock' },
+    })
+    const result = await service.find({
+      query: { zipCode: '18057', countryCode: 'DE' },
+    })
+    expect(result.city.name).toBe('Rostock')
+  })
+})
 
-    it("get climatic forecast data by city id", async function() {
-      const result = await service.climaticForecast30Days({ cityId: 2844588 });
-      assert.strictEqual(result.city.name, "Rostock", "found correct city");
-    });
+describe('HourlyForecastService', () => {
+  let service: HourlyForecastService
 
-    it("get climatic forecast by geo coordinates", async function() {
-      const result = await service.climaticForecast30Days({ lat: 52.520008, lon: 13.404954 });
-      assert.strictEqual(result.city.name, "Mitte", "found correct 'city'");
-    });
+  beforeAll(() => {
+    service = new HourlyForecastService({ appid: 'test-key' })
+  })
 
-    it("get climatic forecast by zip code", async function() {
-      const result = await service.climaticForecast30Days({ zipCode: "18057", countryCode: "DE" });
-      assert.strictEqual(result.city.name, "Rostock", "found correct city");
-    });
-  });
+  it('find hits forecast/hourly endpoint', async () => {
+    mockFetch({
+      cod: 200,
+      message: 0,
+      cnt: 0,
+      list: [],
+      city: { name: 'Munich' },
+    })
+    await service.find({ query: { cityName: 'Munich' } })
+    expect(fetchUrl()).toContain('/3.0/forecast/hourly')
+  })
+})
 
-  describe("air_pollution", function() {
-    describe("current air pollution", function() {
-      it("find: get current air pollution", async function() {
-        const result = await service.find({ query: { endpoint: "air_pollution", lat: 52.520008, lon: 13.404954 } });
-        assert.deepStrictEqual(result.coord, { lat: 52.52, lon: 13.405 }, "returned something");
-        assert.strictEqual(result.list.length, 1, "has one list entry");
-        assert.ok(1 <= result.list[0].main.aqi && result.list[0].main.aqi <= 5, "air quality is between 1 and 5");
-      });
+describe('DailyForecastService', () => {
+  let service: DailyForecastService
 
-      it("create: get current air pollution", async function() {
-        const result = await service.create({ endpoint: "air_pollution", lat: 52.520008, lon: 13.404954 });
-        assert.deepStrictEqual(result.coord, { lat: 52.52, lon: 13.405 }, "returned something");
-        assert.strictEqual(result.list.length, 1, "has one list entry");
-        assert.ok(1 <= result.list[0].main.aqi && result.list[0].main.aqi <= 5, "air quality is between 1 and 5");
-      });
+  beforeAll(() => {
+    service = new DailyForecastService({ appid: 'test-key' })
+  })
 
-      it("custom: get current air pollution", async function() {
-        const result = await service.airPollutionCurrent({ lat: 52.520008, lon: 13.404954 });
-        assert.deepStrictEqual(result.coord, { lat: 52.52, lon: 13.405 }, "returned something");
-        assert.strictEqual(result.list.length, 1, "has one list entry");
-        assert.ok(1 <= result.list[0].main.aqi && result.list[0].main.aqi <= 5, "air quality is between 1 and 5");
-      });
-    });
+  it('find hits forecast/daily endpoint', async () => {
+    mockFetch({
+      cod: 200,
+      message: 0,
+      cnt: 0,
+      list: [],
+      city: { name: 'Munich' },
+    })
+    await service.find({ query: { cityName: 'Munich' } })
+    expect(fetchUrl()).toContain('/3.0/forecast/daily')
+  })
+})
 
-    describe("forecast air pollution", function() {
-      it("find: get forecast air pollution", async function() {
-        const result = await service.find({ query: { endpoint: "air_pollution/forecast", lat: 52.520008, lon: 13.404954 } });
-        assert.deepStrictEqual(result.coord, { lat: 52.52, lon: 13.405 }, "returned something");
-        assert.ok(result.list.length, "has list");
-        assert.ok(1 <= result.list[0].main.aqi && result.list[0].main.aqi <= 5, "air quality is between 1 and 5");
-      });
+describe('ClimaticForecastService', () => {
+  let service: ClimaticForecastService
 
-      it("create: get forecast air pollution", async function() {
-        const result = await service.create({ endpoint: "air_pollution/forecast", lat: 52.520008, lon: 13.404954 });
-        assert.deepStrictEqual(result.coord, { lat: 52.52, lon: 13.405 }, "returned something");
-        assert.ok(result.list.length, "has list");
-        assert.ok(1 <= result.list[0].main.aqi && result.list[0].main.aqi <= 5, "air quality is between 1 and 5");
-      });
+  beforeAll(() => {
+    service = new ClimaticForecastService({ appid: 'test-key' })
+  })
 
-      it("custom: get forecast air pollution", async function() {
-        const result = await service.airPollutionForecast({ lat: 52.520008, lon: 13.404954 });
-        assert.deepStrictEqual(result.coord, { lat: 52.52, lon: 13.405 }, "returned something");
-        assert.ok(result.list.length, "has list");
-        assert.ok(1 <= result.list[0].main.aqi && result.list[0].main.aqi <= 5, "air quality is between 1 and 5");
-      });
-    });
+  it('find hits forecast/climate endpoint', async () => {
+    mockFetch({ cod: 200, city: { name: 'Munich' }, list: [] })
+    await service.find({ query: { cityName: 'Munich' } })
+    expect(fetchUrl()).toContain('/3.0/forecast/climate')
+  })
+})
 
-    describe("historical air pollution", function() {
-      it("find: get historical air pollution", async function() {
-        const result = await service.find({ query: { endpoint: "air_pollution/history", start: 1606223802, end: 1606482999, lat: 52.520008, lon: 13.404954 } });
-        assert.deepStrictEqual(result.coord, { lat: 52.52, lon: 13.405 }, "returned something");
-        assert.strictEqual(result.list.length, 61, "has full list");
-        assert.ok(1 <= result.list[0].main.aqi && result.list[0].main.aqi <= 5, "air quality is between 1 and 5");
-      });
+describe('AirPollutionService', () => {
+  let service: AirPollutionService
 
-      it("create: get historical air pollution", async function() {
-        const result = await service.create({ endpoint: "air_pollution/history", start: 1606223802, end: 1606482999, lat: 52.520008, lon: 13.404954 });
-        assert.deepStrictEqual(result.coord, { lat: 52.52, lon: 13.405 }, "returned something");
-        assert.strictEqual(result.list.length, 61, "has full list");
-        assert.ok(1 <= result.list[0].main.aqi && result.list[0].main.aqi <= 5, "air quality is between 1 and 5");
-      });
+  beforeAll(() => {
+    service = new AirPollutionService({ appid: 'test-key' })
+  })
 
-      it("custom: get historical air pollution", async function() {
-        const result = await service.airPollutionHistorical({ start: 1606223802, end: 1606482999, lat: 52.520008, lon: 13.404954 });
-        assert.deepStrictEqual(result.coord, { lat: 52.52, lon: 13.405 }, "returned something");
-        assert.strictEqual(result.list.length, 61, "has full list");
-        assert.ok(1 <= result.list[0].main.aqi && result.list[0].main.aqi <= 5, "air quality is between 1 and 5");
-      });
-    });
-  });
-});
+  const response = {
+    coord: { lat: 52.52, lon: 13.405 },
+    list: [
+      {
+        dt: 1625000000,
+        main: { aqi: 2 },
+        components: {
+          co: 201.94,
+          no: 0.01,
+          no2: 0.77,
+          o3: 68.66,
+          so2: 0.64,
+          pm2_5: 0.5,
+          pm10: 0.54,
+          nh3: 0.12,
+        },
+      },
+    ],
+  }
+
+  it('find (current)', async () => {
+    mockFetch(response)
+    const result = await service.find({
+      query: { lat: 52.520008, lon: 13.404954 },
+    })
+    expect(result.coord).toEqual({ lat: 52.52, lon: 13.405 })
+    expect(result.list.length).toBe(1)
+    expect(result.list[0].main.aqi).toBeGreaterThanOrEqual(1)
+    expect(result.list[0].main.aqi).toBeLessThanOrEqual(5)
+    expect(fetchUrl()).toContain('/3.0/air_pollution')
+  })
+
+  it('create (current)', async () => {
+    mockFetch(response)
+    const result = await service.create({ lat: 52.520008, lon: 13.404954 })
+    expect(result.coord).toEqual({ lat: 52.52, lon: 13.405 })
+    expect(result.list.length).toBe(1)
+  })
+
+  it('forecast', async () => {
+    const forecastResponse = {
+      ...response,
+      list: Array.from({ length: 5 }, (_, i) => ({
+        ...response.list[0],
+        dt: 1625000000 + i * 3600,
+      })),
+    }
+    mockFetch(forecastResponse)
+    const result = await service.forecast({ lat: 52.520008, lon: 13.404954 })
+    expect(result.coord).toEqual({ lat: 52.52, lon: 13.405 })
+    expect(result.list.length).toBe(5)
+    expect(fetchUrl()).toContain('air_pollution/forecast')
+  })
+
+  it('historical', async () => {
+    const historicalResponse = {
+      ...response,
+      list: Array.from({ length: 61 }, (_, i) => ({
+        ...response.list[0],
+        dt: 1606223802 + i * 3600,
+      })),
+    }
+    mockFetch(historicalResponse)
+    const result = await service.historical({
+      lat: 52.520008,
+      lon: 13.404954,
+      start: 1606223802,
+      end: 1606482999,
+    })
+    expect(result.coord).toEqual({ lat: 52.52, lon: 13.405 })
+    expect(result.list.length).toBe(61)
+    expect(fetchUrl()).toContain('air_pollution/history')
+  })
+})
+
+describe('error handling', () => {
+  let service: WeatherService
+
+  beforeAll(() => {
+    service = new WeatherService({ appid: 'test-key' })
+  })
+
+  it('throws on non-ok response', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        text: () => Promise.resolve('{"cod":401,"message":"Invalid API key"}'),
+      }),
+    )
+    await expect(service.create({ cityName: 'Munich' })).rejects.toThrow()
+  })
+
+  it('throws on network error', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockRejectedValue(new Error('Network error')),
+    )
+    await expect(service.create({ cityName: 'Munich' })).rejects.toThrow()
+  })
+})
+
+describe('URL construction', () => {
+  let service: WeatherService
+
+  beforeAll(() => {
+    service = new WeatherService({ appid: 'test-key' })
+  })
+
+  it('uses correct base URL and default version', async () => {
+    mockFetch({ name: 'Test' })
+    await service.create({ cityName: 'Test' })
+    expect(fetchUrl()).toContain(
+      'https://api.openweathermap.org/data/3.0/weather',
+    )
+  })
+
+  it('allows overriding version per request', async () => {
+    mockFetch({ name: 'Test' })
+    await service.create({ cityName: 'Test', v: '2.5' })
+    expect(fetchUrl()).toContain('/2.5/weather')
+  })
+
+  it('includes appid in query params', async () => {
+    mockFetch({ name: 'Test' })
+    await service.create({ cityName: 'Test' })
+    expect(fetchUrl()).toContain('appid=test-key')
+  })
+})
