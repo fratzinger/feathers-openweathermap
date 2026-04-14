@@ -1,7 +1,7 @@
 {
   "name": "feathers-openweathermap",
-  "version": "0.2.0",
-  "description": "A OpenWeatherMap Service for feathers.js applications",
+  "version": "1.0.0",
+  "description": "An OpenWeatherMap Service for feathers.js applications",
   "author": "fratzinger",
   "homepage": "https://github.com/fratzinger/feathers-openweathermap",
   "repository": {
@@ -12,54 +12,43 @@
     "feathers",
     "feathers.js",
     "feathers-plugin",
-    "open-weather-map"
+    "open-weather-map",
+    "openweathermap"
   ],
   "license": "MIT",
-  "main": "dist/",
-  "types": "dist/",
-  "directories": {
-    "test": "test",
-    "lib": "lib"
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "types": "./dist/index.d.mts"
+    }
   },
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.mts",
   "files": [
     "CHANGELOG.md",
     "LICENSE",
     "README.md",
     "src/**",
-    "lib/**",
     "dist/**"
   ],
   "scripts": {
-    "compile": "shx rm -rf dist/ && tsc",
-    "version": "npm run compile",
-    "release": "np",
-    "mocha": "cross-env NODE_ENV=test TS_NODE_PROJECT='tsconfig.test.json' mocha --timeout 5000",
-    "test": "npm run mocha",
-    "coverage": "nyc npm run test",
-    "lint": "eslint . --ext .js,.jsx,.ts,.tsx"
+    "build": "tsdown",
+    "lint": "eslint src/ test/",
+    "test": "vitest run",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@feathersjs/adapter-commons": "^4.5.15",
-    "@feathersjs/errors": "^4.5.15",
-    "feathers-hooks-common": "^6.1.3",
-    "got": "^11.8.5"
+    "@feathersjs/errors": "^5.0.0"
   },
   "devDependencies": {
-    "@feathersjs/feathers": "^4.5.15",
-    "@istanbuljs/nyc-config-typescript": "^1.0.2",
-    "@types/mocha": "^9.1.1",
-    "@types/node": "^18.0.0",
-    "@typescript-eslint/eslint-plugin": "^5.29.0",
-    "@typescript-eslint/parser": "^5.29.0",
-    "cross-env": "^7.0.3",
+    "@feathers-community/eslint-config": "latest",
+    "@feathersjs/feathers": "^5.0.0",
+    "@types/node": "^22.0.0",
     "dotenv": "^16.0.1",
-    "eslint": "^8.18.0",
-    "mocha": "^10.0.0",
-    "np": "^7.6.2",
-    "nyc": "^15.1.0",
-    "shx": "^0.3.4",
-    "ts-node": "^10.8.1",
-    "type-fest": "^2.13.1",
-    "typescript": "^4.7.4"
+    "eslint": "^9.0.0",
+    "tsdown": "latest",
+    "typescript": "^5.0.0",
+    "vitest": "latest"
   }
 }
