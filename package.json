@@ -1,7 +1,7 @@
 {
   "name": "feathers-openweathermap",
   "version": "1.0.0",
-  "packageManager": "pnpm@10.12.4",
+  "packageManager": "pnpm@10.33.0",
   "description": "An OpenWeatherMap Service for feathers.js applications",
   "author": "fratzinger",
   "homepage": "https://github.com/fratzinger/feathers-openweathermap",
@@ -41,16 +41,15 @@
     "vitest": "vitest"
   },
   "dependencies": {
-    "@feathersjs/errors": "^5.0.0"
+    "@feathersjs/errors": "^5.0.44"
   },
   "devDependencies": {
-    "@feathers-community/eslint-config": "latest",
-    "@feathersjs/feathers": "^5.0.0",
-    "@types/node": "^22.0.0",
-    "dotenv": "^16.0.1",
-    "eslint": "^9.0.0",
-    "tsdown": "latest",
-    "typescript": "^5.0.0",
-    "vitest": "latest"
+    "@feathers-community/eslint-config": "^0.0.10",
+    "@feathersjs/feathers": "^5.0.44",
+    "@types/node": "^25.6.0",
+    "eslint": "^9.39.4",
+    "tsdown": "^0.21.8",
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.4"
   }
 }
