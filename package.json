@@ -1,6 +1,7 @@
 {
   "name": "feathers-openweathermap",
   "version": "1.0.0",
+  "packageManager": "pnpm@10.12.4",
   "description": "An OpenWeatherMap Service for feathers.js applications",
   "author": "fratzinger",
   "homepage": "https://github.com/fratzinger/feathers-openweathermap",
@@ -34,9 +35,10 @@
   ],
   "scripts": {
     "build": "tsdown",
+    "version": "pnpm run build",
     "lint": "eslint src/ test/",
     "test": "vitest run",
-    "prepublishOnly": "npm run build"
+    "vitest": "vitest"
   },
   "dependencies": {
     "@feathersjs/errors": "^5.0.0"
