@@ -1,6 +1,6 @@
 {
   "name": "feathers-openweathermap",
-  "version": "1.0.0",
+  "version": "0.2.0",
   "packageManager": "pnpm@10.12.4",
   "description": "An OpenWeatherMap Service for feathers.js applications",
   "author": "fratzinger",
